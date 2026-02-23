@@ -21,17 +21,19 @@ func WrapHandler(h func(*Ctx) error) fiber.Handler {
 // Returns 400 if JSON is invalid, 422 if validation fails.
 func (c *Ctx) ParseBody(dst any) error {
 	if err := c.Ctx.BodyParser(dst); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"status_code": 400,
 			"message":     "invalid request body",
 		})
+		return fiber.ErrBadRequest
 	}
 	if errs := validation.Validate(dst); len(errs) > 0 {
-		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+		c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
 			"status_code": 422,
 			"message":     "validation error",
 			"errors":      errs,
 		})
+		return fiber.ErrUnprocessableEntity
 	}
 	return nil
 }
