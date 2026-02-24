@@ -10,7 +10,8 @@ func generateError(name string) string {
 	return fmt.Sprintf("required environment variable not found: %s", name)
 }
 
-// GetEnv gets an environment variable as string. Panics if it doesn't exist.
+// GetEnv retrieves an environment variable by name and returns its string value.
+// It panics if the environment variable is not set.
 func GetEnv(name string) string {
 	value, ok := os.LookupEnv(name)
 	if !ok {
@@ -19,7 +20,8 @@ func GetEnv(name string) string {
 	return value
 }
 
-// GetEnvOrDefault gets an environment variable or returns the default value.
+// GetEnvOrDefault retrieves an environment variable by name and returns its string value.
+// If the environment variable is not set, it returns the provided default value.
 func GetEnvOrDefault(name, defaultValue string) string {
 	value, ok := os.LookupEnv(name)
 	if !ok {
@@ -28,6 +30,8 @@ func GetEnvOrDefault(name, defaultValue string) string {
 	return value
 }
 
+// GetEnvInt retrieves an environment variable by name and returns its integer value.
+// It panics if the environment variable is not set or cannot be parsed as an integer.
 func GetEnvInt(name string) int {
 	value := GetEnv(name)
 	result, err := strconv.Atoi(value)
@@ -37,6 +41,8 @@ func GetEnvInt(name string) int {
 	return result
 }
 
+// GetEnvIntOrDefault retrieves an environment variable by name and returns its integer value.
+// If the environment variable is not set or cannot be parsed as an integer, it returns the provided default value.
 func GetEnvIntOrDefault(name string, defaultValue int) int {
 	value, ok := os.LookupEnv(name)
 	if !ok {
@@ -49,6 +55,8 @@ func GetEnvIntOrDefault(name string, defaultValue int) int {
 	return result
 }
 
+// GetEnvUint retrieves an environment variable by name and returns its unsigned integer value.
+// It panics if the environment variable is not set or cannot be parsed as an unsigned integer.
 func GetEnvUint(name string) uint {
 	value := GetEnv(name)
 	result, err := strconv.ParseUint(value, 10, 32)
@@ -58,6 +66,8 @@ func GetEnvUint(name string) uint {
 	return uint(result)
 }
 
+// GetEnvBool retrieves an environment variable by name and returns its boolean value.
+// It panics if the environment variable is not set or cannot be parsed as a boolean.
 func GetEnvBool(name string) bool {
 	value := GetEnv(name)
 	result, err := strconv.ParseBool(value)
@@ -67,6 +77,8 @@ func GetEnvBool(name string) bool {
 	return result
 }
 
+// GetEnvBoolOrDefault retrieves an environment variable by name and returns its boolean value.
+// If the environment variable is not set or cannot be parsed as a boolean, it returns the provided default value.
 func GetEnvBoolOrDefault(name string, defaultValue bool) bool {
 	value, ok := os.LookupEnv(name)
 	if !ok {

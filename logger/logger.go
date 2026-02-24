@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"io"
 	logGolang "log"
 	"os"
 	"path"
@@ -11,6 +12,7 @@ import (
 
 type Logger struct {
 	isProduction bool
+	writer       io.Writer
 }
 
 type LogLevel string
@@ -22,11 +24,19 @@ const (
 	debugLevel LogLevel = "DEBUG"
 )
 
+// NewLogger creates a new Logger instance.
+// In production, debug logs are disabled.
 func NewLogger(isProduction bool) *Logger {
-	return &Logger{isProduction: isProduction}
+	return &Logger{isProduction: isProduction, writer: os.Stdout}
 }
 
-// caller extracts the file and line of the real caller (2 levels up)
+// WithWriter returns a new Logger with a custom writer.
+// Useful for testing — inject a bytes.Buffer to capture output.
+func (l *Logger) WithWriter(w io.Writer) *Logger {
+	return &Logger{isProduction: l.isProduction, writer: w}
+}
+
+// caller extracts the file and line of the real caller (2 levels up).
 func (l *Logger) caller() (string, int) {
 	_, file, line, ok := runtime.Caller(2)
 	if !ok {
@@ -38,28 +48,32 @@ func (l *Logger) caller() (string, int) {
 func (l *Logger) log(level LogLevel, fileName string, line int, format string, args ...interface{}) {
 	timeStamp := time.Now().Format("2006-01-02 15:04:05")
 	message := fmt.Sprintf(format, args...)
-	logLine := fmt.Sprintf("[%s] [%s] [%s:%d] %s", timeStamp, level, fileName, line, message)
+	logLine := fmt.Sprintf("[KEEL] [%s] [%s] [%s:%d] %s", timeStamp, level, fileName, line, message)
 	if level == errorLevel {
 		logGolang.Fatalln(logLine)
 	}
-	fmt.Fprintln(os.Stdout, logLine)
+	fmt.Fprintln(l.writer, logLine)
 }
 
+// Info logs an informational message.
 func (l *Logger) Info(format string, args ...interface{}) {
 	f, line := l.caller()
 	l.log(infoLevel, f, line, format, args...)
 }
 
+// Warn logs a warning message.
 func (l *Logger) Warn(format string, args ...interface{}) {
 	f, line := l.caller()
 	l.log(warnLevel, f, line, format, args...)
 }
 
+// Error logs an error message and exits the application.
 func (l *Logger) Error(format string, args ...interface{}) {
 	f, line := l.caller()
 	l.log(errorLevel, f, line, format, args...)
 }
 
+// Debug logs a debug message. Disabled in production.
 func (l *Logger) Debug(format string, args ...interface{}) {
 	if !l.isProduction {
 		f, line := l.caller()
