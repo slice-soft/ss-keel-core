@@ -1,31 +1,14 @@
-name: Release
+name: Release Go Library
 
 on:
-  push:
-    tags:
-      - "v*"
-
-permissions:
-  contents: write
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
 
 jobs:
-  release:
-    name: Publish Release
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.21"
-          cache: true
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  release-go-library:
+    if: github.event.pull_request.merged == true
+    uses: slice-soft/ss-pipeline/.github/workflows/create-release.yml@v0
+    secrets: inherit
