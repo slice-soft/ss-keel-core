@@ -43,7 +43,14 @@ func New(cfg KConfig) *App {
 	f.Use(recover.New())
 	f.Use(cors.New())
 
-	return &App{fiber: f, config: cfg, logger: log}
+	app := &App{fiber: f, config: cfg, logger: log}
+
+	if !cfg.DisableHealth {
+		app.registerHealth()
+	}
+
+	return app
+
 }
 
 // Use registers a module into the app.
@@ -63,10 +70,6 @@ func (a *App) RegisterController(c Controller) {
 
 // Listen starts the HTTP server.
 func (a *App) Listen() error {
-	if !a.config.DisableHealth {
-		a.registerHealth()
-	}
-
 	if a.config.docsEnabled() {
 		spec := openapi.Build(openapi.BuildInput{
 			Title:   a.config.Docs.Title,
