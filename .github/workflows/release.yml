@@ -1,17 +1,13 @@
 name: Release Go Library
 
 on:
-  pull_request:
-    types:
-      - closed
-    branches:
-      - main
+  push:
+    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
   release-go-library:
-    if: github.event.pull_request.merged == true
     uses: slice-soft/ss-pipeline/.github/workflows/create-release.yml@v0
     secrets: inherit
