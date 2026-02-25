@@ -262,7 +262,9 @@ func goTypeToOA(k reflect.Kind) (string, string) {
 	switch k {
 	case reflect.String:
 		return "string", ""
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32:
+	case reflect.Int, reflect.Int8, reflect.Int16: // ← Int sin format
+		return "integer", ""
+	case reflect.Int32:
 		return "integer", "int32"
 	case reflect.Int64:
 		return "integer", "int64"
