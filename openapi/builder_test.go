@@ -11,31 +11,11 @@ func TestFiberPathToOA(t *testing.T) {
 		input string
 		want  string
 	}{
-		{
-			name:  "simple path no params",
-			input: "/users",
-			want:  "/users",
-		},
-		{
-			name:  "single param",
-			input: "/users/:id",
-			want:  "/users/{id}",
-		},
-		{
-			name:  "nested path with param",
-			input: "/users/:id/posts",
-			want:  "/users/{id}/posts",
-		},
-		{
-			name:  "multiple params",
-			input: "/users/:userId/posts/:postId",
-			want:  "/users/{userId}/posts/{postId}",
-		},
-		{
-			name:  "root path",
-			input: "/",
-			want:  "/",
-		},
+		{name: "simple path no params", input: "/users", want: "/users"},
+		{name: "single param", input: "/users/:id", want: "/users/{id}"},
+		{name: "nested path with param", input: "/users/:id/posts", want: "/users/{id}/posts"},
+		{name: "multiple params", input: "/users/:userId/posts/:postId", want: "/users/{userId}/posts/{postId}"},
+		{name: "root path", input: "/", want: "/"},
 	}
 
 	for _, tt := range tests {
@@ -56,36 +36,11 @@ func TestInferSecurityScheme(t *testing.T) {
 		wantScheme string
 		wantIn     string
 	}{
-		{
-			name:       "bearerAuth → HTTP Bearer",
-			input:      "bearerAuth",
-			wantType:   "http",
-			wantScheme: "bearer",
-		},
-		{
-			name:       "myBearerToken → HTTP Bearer",
-			input:      "myBearerToken",
-			wantType:   "http",
-			wantScheme: "bearer",
-		},
-		{
-			name:       "basicAuth → HTTP Basic",
-			input:      "basicAuth",
-			wantType:   "http",
-			wantScheme: "basic",
-		},
-		{
-			name:     "apiKey → API Key in header",
-			input:    "apiKey",
-			wantType: "apiKey",
-			wantIn:   "header",
-		},
-		{
-			name:     "unknown → fallback API Key",
-			input:    "somethingElse",
-			wantType: "apiKey",
-			wantIn:   "header",
-		},
+		{name: "bearerAuth → HTTP Bearer", input: "bearerAuth", wantType: "http", wantScheme: "bearer"},
+		{name: "myBearerToken → HTTP Bearer", input: "myBearerToken", wantType: "http", wantScheme: "bearer"},
+		{name: "basicAuth → HTTP Basic", input: "basicAuth", wantType: "http", wantScheme: "basic"},
+		{name: "apiKey → API Key in header", input: "apiKey", wantType: "apiKey", wantIn: "header"},
+		{name: "unknown → fallback API Key", input: "somethingElse", wantType: "apiKey", wantIn: "header"},
 	}
 
 	for _, tt := range tests {
@@ -104,27 +59,32 @@ func TestInferSecurityScheme(t *testing.T) {
 	}
 }
 
+// goTypeToOA returns (type, format) — tests verify both values.
 func TestGoTypeToOA(t *testing.T) {
 	tests := []struct {
-		name  string
-		input reflect.Kind
-		want  string
+		name     string
+		input    reflect.Kind
+		wantType string
+		wantFmt  string
 	}{
-		{name: "string", input: reflect.String, want: "string"},
-		{name: "int", input: reflect.Int, want: "integer"},
-		{name: "int32", input: reflect.Int32, want: "integer"},
-		{name: "int64", input: reflect.Int64, want: "integer"},
-		{name: "float32", input: reflect.Float32, want: "number"},
-		{name: "float64", input: reflect.Float64, want: "number"},
-		{name: "bool", input: reflect.Bool, want: "boolean"},
-		{name: "unknown defaults to string", input: reflect.Slice, want: "string"},
+		{name: "string", input: reflect.String, wantType: "string", wantFmt: ""},
+		{name: "int", input: reflect.Int, wantType: "integer", wantFmt: ""},
+		{name: "int32", input: reflect.Int32, wantType: "integer", wantFmt: "int32"},
+		{name: "int64", input: reflect.Int64, wantType: "integer", wantFmt: "int64"},
+		{name: "float32", input: reflect.Float32, wantType: "number", wantFmt: "float"},
+		{name: "float64", input: reflect.Float64, wantType: "number", wantFmt: "double"},
+		{name: "bool", input: reflect.Bool, wantType: "boolean", wantFmt: ""},
+		{name: "unknown defaults to string", input: reflect.Slice, wantType: "string", wantFmt: ""},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := goTypeToOA(tt.input)
-			if got != tt.want {
-				t.Errorf("goTypeToOA() = %v, want %v", got, tt.want)
+			gotType, gotFmt := goTypeToOA(tt.input)
+			if gotType != tt.wantType {
+				t.Errorf("type = %v, want %v", gotType, tt.wantType)
+			}
+			if gotFmt != tt.wantFmt {
+				t.Errorf("format = %v, want %v", gotFmt, tt.wantFmt)
 			}
 		})
 	}
@@ -224,6 +184,79 @@ func TestReflectSchema(t *testing.T) {
 	}
 }
 
+func TestReflectSchemaFormats(t *testing.T) {
+	type formatsDTO struct {
+		Email string  `json:"email" validate:"required,email"`
+		ID    string  `json:"id"    validate:"required,uuid4"`
+		URL   string  `json:"url"   validate:"required,url"`
+		Age   int32   `json:"age"`
+		Score float64 `json:"score"`
+	}
+
+	got := reflectSchema(formatsDTO{})
+	props, ok := got["properties"].(map[string]any)
+	if !ok {
+		t.Fatal("properties should be a map")
+	}
+
+	cases := []struct {
+		field      string
+		wantFormat string
+	}{
+		{"email", "email"},
+		{"id", "uuid"},
+		{"url", "uri"},
+		{"age", "int32"},
+		{"score", "double"},
+	}
+
+	for _, c := range cases {
+		prop, ok := props[c.field].(map[string]any)
+		if !ok {
+			t.Errorf("field %q not found in properties", c.field)
+			continue
+		}
+		if prop["format"] != c.wantFormat {
+			t.Errorf("field %q format = %v, want %v", c.field, prop["format"], c.wantFormat)
+		}
+	}
+}
+
+func TestReflectSchemaMinMax(t *testing.T) {
+	type minMaxDTO struct {
+		Name string `json:"name" validate:"required,min=2,max=50"`
+		Age  int    `json:"age"  validate:"min=18,max=120"`
+	}
+
+	got := reflectSchema(minMaxDTO{})
+	props, ok := got["properties"].(map[string]any)
+	if !ok {
+		t.Fatal("properties should be a map")
+	}
+
+	name, ok := props["name"].(map[string]any)
+	if !ok {
+		t.Fatal("name property not found")
+	}
+	if name["minLength"] != 2 {
+		t.Errorf("name minLength = %v, want 2", name["minLength"])
+	}
+	if name["maxLength"] != 50 {
+		t.Errorf("name maxLength = %v, want 50", name["maxLength"])
+	}
+
+	age, ok := props["age"].(map[string]any)
+	if !ok {
+		t.Fatal("age property not found")
+	}
+	if age["minimum"] != 18 {
+		t.Errorf("age minimum = %v, want 18", age["minimum"])
+	}
+	if age["maximum"] != 120 {
+		t.Errorf("age maximum = %v, want 120", age["maximum"])
+	}
+}
+
 func TestBuild(t *testing.T) {
 	type responseDTO struct {
 		ID   string `json:"id"`
@@ -240,6 +273,7 @@ func TestBuild(t *testing.T) {
 		wantVersion    string
 		wantPaths      []string
 		wantSecSchemes []string
+		wantSchemas    []string
 	}{
 		{
 			name: "basic build with title and version",
@@ -296,7 +330,7 @@ func TestBuild(t *testing.T) {
 			wantSecSchemes: []string{"bearerAuth", "apiKey"},
 		},
 		{
-			name: "build with body and response",
+			name: "build with body and response registers named schemas",
 			input: BuildInput{
 				Title:   "Test API",
 				Version: "1.0.0",
@@ -313,6 +347,7 @@ func TestBuild(t *testing.T) {
 			wantTitle:   "Test API",
 			wantVersion: "1.0.0",
 			wantPaths:   []string{"/users"},
+			wantSchemas: []string{"bodyDTO", "responseDTO"},
 		},
 	}
 
@@ -339,6 +374,12 @@ func TestBuild(t *testing.T) {
 			for _, scheme := range tt.wantSecSchemes {
 				if _, exists := got.Components.SecuritySchemes[scheme]; !exists {
 					t.Errorf("missing security scheme %q in components", scheme)
+				}
+			}
+
+			for _, schema := range tt.wantSchemas {
+				if _, exists := got.Components.Schemas[schema]; !exists {
+					t.Errorf("missing schema %q in components/schemas", schema)
 				}
 			}
 		})
