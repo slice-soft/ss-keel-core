@@ -6,6 +6,6 @@ jobs:
   validate:
     uses: slice-soft/ss-pipeline/.github/workflows/validate-pr.yml@v0
     secrets: inherit
-  ci:
+  go-ci:
     uses: slice-soft/ss-pipeline/.github/workflows/ci-go.yml@v0
     secrets: inherit
