@@ -1,10 +1,11 @@
 package core
 
 type KConfig struct {
-	Port        int
-	ServiceName string
-	Env         string
-	Docs        DocsConfig
+	DisableHealth bool
+	Port          int
+	ServiceName   string
+	Env           string
+	Docs          DocsConfig
 }
 
 type DocsConfig struct {
