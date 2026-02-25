@@ -72,8 +72,8 @@ func (r Route) WithBody(b *BodyMeta) Route {
 	return r
 }
 
-// Res sets the response metadata on the route.
-func (r Route) Res(res *ResponseMeta) Route {
+// WithResponse sets the response metadata on the route.
+func (r Route) WithResponse(res *ResponseMeta) Route {
 	r.response = res
 	return r
 }
