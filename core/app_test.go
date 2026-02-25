@@ -153,7 +153,7 @@ func TestRegisterController(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app := New(KConfig{})
+			app := New(KConfig{DisableHealth: true})
 			app.RegisterController(&testController{routes: tt.routes})
 
 			if len(app.routes) != tt.wantRoutes {
@@ -181,7 +181,7 @@ func TestUse(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app := New(KConfig{})
+			app := New(KConfig{DisableHealth: true})
 			app.Use(&testModule{
 				controller: &testController{routes: tt.routes},
 			})
