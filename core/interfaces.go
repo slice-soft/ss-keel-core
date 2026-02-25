@@ -10,3 +10,10 @@ type Module interface {
 type Controller interface {
 	Routes() []Route
 }
+
+// ControllerFunc is a helper to create controllers from simple functions.
+type ControllerFunc func() []Route
+
+func (f ControllerFunc) Routes() []Route {
+	return f()
+}

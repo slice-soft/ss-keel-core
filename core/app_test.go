@@ -84,6 +84,11 @@ func TestHealthEndpoint(t *testing.T) {
 			wantServiceName: "Test API",
 		},
 		{
+			name:     "health disabled returns 404",
+			cfg:      KConfig{ServiceName: "Test API", DisableHealth: true},
+			wantCode: http.StatusNotFound,
+		},
+		{
 			name:            "health with default service name",
 			cfg:             KConfig{},
 			wantCode:        http.StatusOK,
@@ -104,6 +109,10 @@ func TestHealthEndpoint(t *testing.T) {
 				t.Errorf("StatusCode = %v, want %v", resp.StatusCode, tt.wantCode)
 			}
 
+			if tt.wantCode != http.StatusOK {
+				return
+			}
+
 			var body map[string]any
 			if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
 				t.Fatal(err)
@@ -111,7 +120,7 @@ func TestHealthEndpoint(t *testing.T) {
 			if body["status"] != "UP" {
 				t.Errorf("status = %v, want UP", body["status"])
 			}
-			if body["service"] != tt.wantServiceName {
+			if tt.wantServiceName != "" && body["service"] != tt.wantServiceName {
 				t.Errorf("service = %v, want %v", body["service"], tt.wantServiceName)
 			}
 		})
@@ -144,7 +153,7 @@ func TestRegisterController(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app := New(KConfig{})
+			app := New(KConfig{DisableHealth: true})
 			app.RegisterController(&testController{routes: tt.routes})
 
 			if len(app.routes) != tt.wantRoutes {
@@ -172,7 +181,7 @@ func TestUse(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app := New(KConfig{})
+			app := New(KConfig{DisableHealth: true})
 			app.Use(&testModule{
 				controller: &testController{routes: tt.routes},
 			})

@@ -5,7 +5,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	fiberLogger "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/slicesoft/ss-keel-core/logger"
@@ -19,6 +18,7 @@ type App struct {
 	logger *logger.Logger
 }
 
+// New creates a new App instance with the given configuration.
 func New(cfg KConfig) *App {
 	cfg = applyDefaults(cfg)
 	log := logger.NewLogger(cfg.isProduction())
@@ -39,26 +39,26 @@ func New(cfg KConfig) *App {
 	})
 
 	f.Use(requestid.New())
-	f.Use(fiberLogger.New(fiberLogger.Config{
-		Format: "[${ip}]:${port} - ${pid} - ${locals:requestid} - ${status} - ${method} ${path}\n",
-	}))
+	f.Use(keelLogger(log))
 	f.Use(recover.New())
 	f.Use(cors.New())
 
-	f.Get("/health", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"status":  "UP",
-			"service": cfg.ServiceName,
-		})
-	})
+	app := &App{fiber: f, config: cfg, logger: log}
 
-	return &App{fiber: f, config: cfg, logger: log}
+	if !cfg.DisableHealth {
+		app.registerHealth()
+	}
+
+	return app
+
 }
 
+// Use registers a module into the app.
 func (a *App) Use(m Module) {
 	m.Register(a)
 }
 
+// RegisterController registers all routes from a controller into the app.
 func (a *App) RegisterController(c Controller) {
 	for _, route := range c.Routes() {
 		a.routes = append(a.routes, route)
@@ -68,6 +68,7 @@ func (a *App) RegisterController(c Controller) {
 	}
 }
 
+// Listen starts the HTTP server.
 func (a *App) Listen() error {
 	if a.config.docsEnabled() {
 		spec := openapi.Build(openapi.BuildInput{
@@ -90,6 +91,8 @@ func (a *App) Logger() *logger.Logger { return a.logger }
 func (a *App) Fiber() *fiber.App      { return a.fiber }
 
 func (a *App) printBanner() {
-	fmt.Printf("\n  ⚓  K E E L\n  ──────────────────────────────\n  Servicio : %s\n  Puerto   : %d\n  Entorno  : %s\n  ──────────────────────────────\n\n",
-		a.config.ServiceName, a.config.Port, a.config.Env)
+	fmt.Printf(
+		"\n  ⚓  K E E L\n  ──────────────────────────────\n  Service  : %s\n  Port     : %d\n  Env      : %s\n  ──────────────────────────────\n\n",
+		a.config.ServiceName, a.config.Port, a.config.Env,
+	)
 }

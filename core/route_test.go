@@ -151,19 +151,19 @@ func TestResponse(t *testing.T) {
 	}{
 		{
 			name:           "response 200",
-			route:          GET("/users", dummyHandler).Res(WithResponse[testResponseDTO](200)),
+			route:          GET("/users", dummyHandler).WithResponse(WithResponse[testResponseDTO](200)),
 			wantResponse:   true,
 			wantStatusCode: 200,
 		},
 		{
 			name:           "response 201",
-			route:          POST("/users", dummyHandler).Res(WithResponse[testResponseDTO](201)),
+			route:          POST("/users", dummyHandler).WithResponse(WithResponse[testResponseDTO](201)),
 			wantResponse:   true,
 			wantStatusCode: 201,
 		},
 		{
 			name:           "response 204 without body",
-			route:          DELETE("/users/:id", dummyHandler).Res(WithResponse[struct{}](204)),
+			route:          DELETE("/users/:id", dummyHandler).WithResponse(WithResponse[struct{}](204)),
 			wantResponse:   true,
 			wantStatusCode: 204,
 		},
@@ -356,7 +356,7 @@ func TestBuilderCombinations(t *testing.T) {
 		{
 			name: "complete GET route",
 			route: GET("/users/:id", dummyHandler).
-				Res(WithResponse[testResponseDTO](200)).
+				WithResponse(WithResponse[testResponseDTO](200)).
 				Tag("users").
 				Describe("Get user", "Returns a user by ID").
 				WithSecured("bearerAuth").
@@ -375,7 +375,7 @@ func TestBuilderCombinations(t *testing.T) {
 			name: "complete POST route",
 			route: POST("/users", dummyHandler).
 				WithBody(WithBody[testDTO]()).
-				Res(WithResponse[testResponseDTO](201)).
+				WithResponse(WithResponse[testResponseDTO](201)).
 				Tag("users").
 				Tag("admin").
 				Describe("Create user").
