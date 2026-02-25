@@ -1,0 +1,4 @@
+# .sonar-pipeline.yml
+host-url: "https://sonarcloud.io"
+create-project: true
+coverage-artifact-name: "coverage"

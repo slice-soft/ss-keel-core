@@ -8,4 +8,6 @@ jobs:
     secrets: inherit
   go-ci:
     uses: slice-soft/ss-pipeline/.github/workflows/ci-go.yml@v0
+    with:
+      run-sonar: false
     secrets: inherit
