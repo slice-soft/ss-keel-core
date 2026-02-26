@@ -461,3 +461,90 @@ func TestBuilderCombinations(t *testing.T) {
 		})
 	}
 }
+
+func TestWithDeprecated(t *testing.T) {
+	t.Run("deprecated flag is set", func(t *testing.T) {
+		route := GET("/users", dummyHandler).WithDeprecated()
+		if !route.Deprecated() {
+			t.Error("Deprecated() should be true")
+		}
+	})
+	t.Run("not deprecated by default", func(t *testing.T) {
+		route := GET("/users", dummyHandler)
+		if route.Deprecated() {
+			t.Error("Deprecated() should be false by default")
+		}
+	})
+}
+
+func TestWithQueryParam(t *testing.T) {
+	tests := []struct {
+		name        string
+		route       Route
+		wantLen     int
+		wantNames   []string
+		wantReq     []bool
+		wantTypes   []string
+		wantDescs   []string
+	}{
+		{
+			name:      "single optional param",
+			route:     GET("/users", dummyHandler).WithQueryParam("status", "string", false),
+			wantLen:   1,
+			wantNames: []string{"status"},
+			wantReq:   []bool{false},
+			wantTypes: []string{"string"},
+			wantDescs: []string{""},
+		},
+		{
+			name: "required param with description",
+			route: GET("/search", dummyHandler).
+				WithQueryParam("q", "string", true, "Search query"),
+			wantLen:   1,
+			wantNames: []string{"q"},
+			wantReq:   []bool{true},
+			wantTypes: []string{"string"},
+			wantDescs: []string{"Search query"},
+		},
+		{
+			name: "multiple params accumulate",
+			route: GET("/users", dummyHandler).
+				WithQueryParam("page", "integer", false, "Page number").
+				WithQueryParam("limit", "integer", false, "Page size").
+				WithQueryParam("sort", "string", false),
+			wantLen:   3,
+			wantNames: []string{"page", "limit", "sort"},
+			wantReq:   []bool{false, false, false},
+			wantTypes: []string{"integer", "integer", "string"},
+		},
+		{
+			name:    "no query params",
+			route:   GET("/users", dummyHandler),
+			wantLen: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			qp := tt.route.QueryParams()
+			if len(qp) != tt.wantLen {
+				t.Errorf("QueryParams() len = %v, want %v", len(qp), tt.wantLen)
+				return
+			}
+			for i, p := range qp {
+				if len(tt.wantNames) > i && p.Name != tt.wantNames[i] {
+					t.Errorf("[%d] Name = %v, want %v", i, p.Name, tt.wantNames[i])
+				}
+				if len(tt.wantReq) > i && p.Required != tt.wantReq[i] {
+					t.Errorf("[%d] Required = %v, want %v", i, p.Required, tt.wantReq[i])
+				}
+				if len(tt.wantTypes) > i && p.Type != tt.wantTypes[i] {
+					t.Errorf("[%d] Type = %v, want %v", i, p.Type, tt.wantTypes[i])
+				}
+				if len(tt.wantDescs) > i && p.Description != tt.wantDescs[i] {
+					t.Errorf("[%d] Description = %v, want %v", i, p.Description, tt.wantDescs[i])
+				}
+			}
+		})
+	}
+}
