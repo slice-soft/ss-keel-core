@@ -9,9 +9,30 @@ type KConfig struct {
 }
 
 type DocsConfig struct {
-	Path    string
-	Title   string
-	Version string
+	Path        string
+	Title       string
+	Version     string
+	Description string
+	Contact     *DocsContact
+	License     *DocsLicense
+	Servers     []string // format: "https://api.example.com - Description"
+	Tags        []DocsTag
+}
+
+type DocsContact struct {
+	Name  string
+	URL   string
+	Email string
+}
+
+type DocsLicense struct {
+	Name string
+	URL  string
+}
+
+type DocsTag struct {
+	Name        string
+	Description string
 }
 
 func applyDefaults(cfg KConfig) KConfig {

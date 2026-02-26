@@ -5,12 +5,13 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/slice-soft/ss-keel-core/logger"
 )
 
-// keelLogger replaces Fiber's default logger middleware with one
-// that uses Keel's logger for consistent log formatting.
-func keelLogger(log *logger.Logger) fiber.Handler {
+// keelLogger is a method on App so it can access a.metricsCollector.
+// It replaces Fiber's default logger middleware with one that uses Keel's
+// logger for consistent log formatting and optional metrics recording.
+func (a *App) keelLogger() fiber.Handler {
+	log := a.logger
 	return func(c *fiber.Ctx) error {
 		start := time.Now()
 		err := c.Next()
@@ -28,6 +29,15 @@ func keelLogger(log *logger.Logger) fiber.Handler {
 			log.Warn("HTTP %s", msg)
 		} else {
 			log.Info("HTTP %s", msg)
+		}
+
+		if a.metricsCollector != nil {
+			a.metricsCollector.RecordRequest(RequestMetrics{
+				Method:     method,
+				Path:       path,
+				StatusCode: status,
+				Duration:   duration,
+			})
 		}
 
 		return err

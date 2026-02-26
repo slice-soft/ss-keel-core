@@ -2,6 +2,14 @@ package core
 
 import "github.com/gofiber/fiber/v2"
 
+// QueryParamMeta documents a query string parameter in OpenAPI.
+type QueryParamMeta struct {
+	Name        string
+	Type        string
+	Description string
+	Required    bool
+}
+
 // Route is the result of the builder.
 type Route struct {
 	method      string
@@ -16,19 +24,23 @@ type Route struct {
 	secured     []string // security schemes: "bearerAuth", "apiKey", etc.
 	body        *BodyMeta
 	response    *ResponseMeta
+	queryParams []QueryParamMeta
+	deprecated  bool
 }
 
 // Getters internos
-func (r Route) Method() string               { return r.method }
-func (r Route) Path() string                 { return r.path }
-func (r Route) Handler() fiber.Handler       { return r.handler }
-func (r Route) Middlewares() []fiber.Handler { return r.middlewares }
-func (r Route) Summary() string              { return r.summary }
-func (r Route) Description() string          { return r.description }
-func (r Route) Tags() []string               { return r.tags }
-func (r Route) Secured() []string            { return r.secured }
-func (r Route) Body() *BodyMeta              { return r.body }
-func (r Route) Response() *ResponseMeta      { return r.response }
+func (r Route) Method() string                  { return r.method }
+func (r Route) Path() string                    { return r.path }
+func (r Route) Handler() fiber.Handler          { return r.handler }
+func (r Route) Middlewares() []fiber.Handler    { return r.middlewares }
+func (r Route) Summary() string                 { return r.summary }
+func (r Route) Description() string             { return r.description }
+func (r Route) Tags() []string                  { return r.tags }
+func (r Route) Secured() []string               { return r.secured }
+func (r Route) Body() *BodyMeta                 { return r.body }
+func (r Route) Response() *ResponseMeta         { return r.response }
+func (r Route) QueryParams() []QueryParamMeta   { return r.queryParams }
+func (r Route) Deprecated() bool               { return r.deprecated }
 
 // BodyMeta describes the request body.
 type BodyMeta struct {
@@ -106,6 +118,24 @@ func (r Route) WithSecured(schemes ...string) Route {
 // Middlewares are NOT documented in OpenAPI — use WithSecured() for that.
 func (r Route) Use(middlewares ...fiber.Handler) Route {
 	r.middlewares = append(r.middlewares, middlewares...)
+	return r
+}
+
+// WithDeprecated marks the route as deprecated in OpenAPI.
+func (r Route) WithDeprecated() Route {
+	r.deprecated = true
+	return r
+}
+
+// WithQueryParam documents a query string parameter in OpenAPI.
+//
+//	GET("/users").WithQueryParam("status", "string", false, "Filter by status")
+func (r Route) WithQueryParam(name, typ string, required bool, desc ...string) Route {
+	qp := QueryParamMeta{Name: name, Type: typ, Required: required}
+	if len(desc) > 0 {
+		qp.Description = desc[0]
+	}
+	r.queryParams = append(r.queryParams, qp)
 	return r
 }
 

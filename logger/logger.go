@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	logGolang "log"
@@ -10,9 +11,18 @@ import (
 	"time"
 )
 
+// LogFormat defines the output format of the logger.
+type LogFormat string
+
+const (
+	LogFormatText LogFormat = "text"
+	LogFormatJSON LogFormat = "json"
+)
+
 type Logger struct {
 	isProduction bool
 	writer       io.Writer
+	format       LogFormat
 }
 
 type LogLevel string
@@ -24,16 +34,22 @@ const (
 	debugLevel LogLevel = "DEBUG"
 )
 
-// NewLogger creates a new Logger instance.
+// NewLogger creates a new Logger instance using text format.
 // In production, debug logs are disabled.
 func NewLogger(isProduction bool) *Logger {
-	return &Logger{isProduction: isProduction, writer: os.Stdout}
+	return &Logger{isProduction: isProduction, writer: os.Stdout, format: LogFormatText}
+}
+
+// NewLoggerWithFormat creates a new Logger with the specified format.
+// In production, debug logs are disabled.
+func NewLoggerWithFormat(isProduction bool, format LogFormat) *Logger {
+	return &Logger{isProduction: isProduction, writer: os.Stdout, format: format}
 }
 
 // WithWriter returns a new Logger with a custom writer.
 // Useful for testing — inject a bytes.Buffer to capture output.
 func (l *Logger) WithWriter(w io.Writer) *Logger {
-	return &Logger{isProduction: l.isProduction, writer: w}
+	return &Logger{isProduction: l.isProduction, writer: w, format: l.format}
 }
 
 // caller extracts the file and line of the real caller (2 levels up).
@@ -46,8 +62,25 @@ func (l *Logger) caller() (string, int) {
 }
 
 func (l *Logger) log(level LogLevel, fileName string, line int, format string, args ...interface{}) {
-	timeStamp := time.Now().Format("2006-01-02 15:04:05")
 	message := fmt.Sprintf(format, args...)
+
+	if l.format == LogFormatJSON {
+		entry := map[string]any{
+			"level": string(level),
+			"ts":    time.Now().Format(time.RFC3339),
+			"file":  fileName,
+			"line":  line,
+			"msg":   message,
+		}
+		b, _ := json.Marshal(entry)
+		if level == errorLevel {
+			logGolang.Fatalln(string(b))
+		}
+		fmt.Fprintln(l.writer, string(b))
+		return
+	}
+
+	timeStamp := time.Now().Format("2006-01-02 15:04:05")
 	logLine := fmt.Sprintf("[KEEL] [%s] [%s] [%s:%d] %s", timeStamp, level, fileName, line, message)
 	if level == errorLevel {
 		logGolang.Fatalln(logLine)

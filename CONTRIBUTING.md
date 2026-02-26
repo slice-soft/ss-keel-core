@@ -41,7 +41,7 @@ You don't need to write code to contribute:
 
 **Requirements:**
 
-- Go 1.21+
+- Go 1.25+
 - Git
 
 **Fork and clone:**
