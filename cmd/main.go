@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/slicesoft/ss-keel-core/config"
-	"github.com/slicesoft/ss-keel-core/core"
+	"github.com/slice-soft/ss-keel-core/config"
+	"github.com/slice-soft/ss-keel-core/core"
 )
 
 type HelloResponse struct {

@@ -7,8 +7,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
-	"github.com/slicesoft/ss-keel-core/logger"
-	"github.com/slicesoft/ss-keel-core/openapi"
+	"github.com/slice-soft/ss-keel-core/logger"
+	"github.com/slice-soft/ss-keel-core/openapi"
 )
 
 type App struct {
