@@ -180,9 +180,13 @@ func (a *App) Listen() error {
 	}
 }
 
+// Logger returns the configured logger instance.
 func (a *App) Logger() *logger.Logger { return a.logger }
-func (a *App) Fiber() *fiber.App      { return a.fiber }
 
+// Fiber returns the underlying Fiber application instance.
+func (a *App) Fiber() *fiber.App { return a.fiber }
+
+// printBanner prints the Keel service banner with service name, port and environment.
 func (a *App) printBanner() {
 	fmt.Printf(
 		"\n  ⚓  K E E L\n  ──────────────────────────────\n  Service  : %s\n  Port     : %d\n  Env      : %s\n  ──────────────────────────────\n\n",

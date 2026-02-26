@@ -7,9 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// keelLogger is a method on App so it can access a.metricsCollector.
-// It replaces Fiber's default logger middleware with one that uses Keel's
-// logger for consistent log formatting and optional metrics recording.
+// keelLogger provides request logging and optional metrics collection for HTTP requests.
 func (a *App) keelLogger() fiber.Handler {
 	log := a.logger
 	return func(c *fiber.Ctx) error {
