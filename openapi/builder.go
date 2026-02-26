@@ -100,7 +100,7 @@ type BuildInput struct {
 	Routes      []RouteInput
 }
 
-// Build constructs the OpenAPI 3.0 spec in memory.
+// Build constructs the OpenAPI 3.0 specification from the provided input.
 func Build(input BuildInput) Spec {
 	paths := make(map[string]any)
 	schemas := make(map[string]any)
@@ -238,7 +238,7 @@ func schemaRef(v any, schemas map[string]any) map[string]any {
 	}
 }
 
-// buildPathParameters extracts :param segments from a Fiber path and generates OpenAPI path parameters.
+// buildPathParameters extracts path parameters from a Fiber path pattern.
 func buildPathParameters(fiberPath string) []map[string]any {
 	var params []map[string]any
 	for _, part := range strings.Split(fiberPath, "/") {
@@ -254,6 +254,7 @@ func buildPathParameters(fiberPath string) []map[string]any {
 	return params
 }
 
+// buildQueryParameters converts query parameter definitions into OpenAPI parameter objects.
 func buildQueryParameters(params []QueryParamInput) []map[string]any {
 	var out []map[string]any
 	for _, p := range params {
@@ -275,6 +276,7 @@ func buildQueryParameters(params []QueryParamInput) []map[string]any {
 	return out
 }
 
+// buildRequestBody creates OpenAPI requestBody definitions from a DTO type.
 func buildRequestBody(dto any, schemas map[string]any) map[string]any {
 	return map[string]any{
 		"required": true,
@@ -340,6 +342,7 @@ func buildAutoErrorResponses(route RouteInput) map[string]any {
 	return errs
 }
 
+// buildResponses builds the OpenAPI responses object for a route, including automatic error responses.
 func buildResponses(route RouteInput, schemas map[string]any) map[string]any {
 	code := route.StatusCode
 	if code == 0 {
@@ -383,7 +386,7 @@ func generateOperationID(method, path string) string {
 	return result
 }
 
-// fieldSchema generates an OpenAPI schema for a single struct field, handling complex types.
+// fieldSchema generates an OpenAPI schema for a single struct field, including complex types.
 func fieldSchema(field reflect.StructField, schemas map[string]any) map[string]any {
 	t := field.Type
 
@@ -537,7 +540,7 @@ func reflectSchema(v any, schemas map[string]any) map[string]any {
 	return schema
 }
 
-// goTypeToOA returns the OpenAPI type and optional format for a Go kind.
+// goTypeToOA maps a Go reflect.Kind to OpenAPI type and format strings.
 func goTypeToOA(k reflect.Kind) (string, string) {
 	switch k {
 	case reflect.String:
@@ -559,7 +562,7 @@ func goTypeToOA(k reflect.Kind) (string, string) {
 	}
 }
 
-// extractParam extracts the value of a validate param e.g. "min=8" → "8".
+// extractParam extracts a parameter value from a comma-separated validate tag.
 func extractParam(tag, key string) string {
 	for _, part := range strings.Split(tag, ",") {
 		if strings.HasPrefix(part, key+"=") {
@@ -569,7 +572,7 @@ func extractParam(tag, key string) string {
 	return ""
 }
 
-// toInt converts a string to int, returns 0 on failure.
+// toInt converts a string to an integer, returning 0 on failure.
 func toInt(s string) int {
 	var n int
 	fmt.Sscanf(s, "%d", &n)
@@ -589,7 +592,7 @@ func inferSecurityScheme(name string) SecurityScheme {
 	}
 }
 
-// fiberPathToOA converts /users/:id → /users/{id}
+// fiberPathToOA converts Fiber path parameters from :id to OpenAPI format {id}.
 func fiberPathToOA(p string) string {
 	parts := strings.Split(p, "/")
 	for i, part := range parts {

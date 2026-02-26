@@ -6,7 +6,7 @@ import (
 	"github.com/slice-soft/ss-keel-core/openapi"
 )
 
-// toBuildInput maps KConfig and routes to the openapi.BuildInput used by Build().
+// toBuildInput maps App configuration and routes to the OpenAPI BuildInput structure.
 func toBuildInput(cfg KConfig, routes []Route) openapi.BuildInput {
 	bi := openapi.BuildInput{
 		Title:       cfg.Docs.Title,
@@ -41,6 +41,7 @@ func toBuildInput(cfg KConfig, routes []Route) openapi.BuildInput {
 	return bi
 }
 
+// toOpenAPIRoutes converts internal Route objects to OpenAPI RouteInput format.
 func toOpenAPIRoutes(routes []Route) []openapi.RouteInput {
 	var out []openapi.RouteInput
 	for _, r := range routes {

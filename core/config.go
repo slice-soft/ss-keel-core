@@ -35,6 +35,7 @@ type DocsTag struct {
 	Description string
 }
 
+// applyDefaults fills in default values for any missing configuration options.
 func applyDefaults(cfg KConfig) KConfig {
 	if cfg.Port == 0 {
 		cfg.Port = 3000
@@ -57,5 +58,8 @@ func applyDefaults(cfg KConfig) KConfig {
 	return cfg
 }
 
+// isProduction returns true if the environment is production.
 func (c KConfig) isProduction() bool { return c.Env == "production" }
-func (c KConfig) docsEnabled() bool  { return !c.isProduction() }
+
+// docsEnabled returns true if API documentation should be generated.
+func (c KConfig) docsEnabled() bool { return !c.isProduction() }

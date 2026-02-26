@@ -28,19 +28,41 @@ type Route struct {
 	deprecated  bool
 }
 
-// Getters internos
-func (r Route) Method() string                  { return r.method }
-func (r Route) Path() string                    { return r.path }
-func (r Route) Handler() fiber.Handler          { return r.handler }
-func (r Route) Middlewares() []fiber.Handler    { return r.middlewares }
-func (r Route) Summary() string                 { return r.summary }
-func (r Route) Description() string             { return r.description }
-func (r Route) Tags() []string                  { return r.tags }
-func (r Route) Secured() []string               { return r.secured }
-func (r Route) Body() *BodyMeta                 { return r.body }
-func (r Route) Response() *ResponseMeta         { return r.response }
-func (r Route) QueryParams() []QueryParamMeta   { return r.queryParams }
-func (r Route) Deprecated() bool               { return r.deprecated }
+// Method returns the HTTP method of the route.
+func (r Route) Method() string { return r.method }
+
+// Path returns the route path pattern.
+func (r Route) Path() string { return r.path }
+
+// Handler returns the Fiber handler function.
+func (r Route) Handler() fiber.Handler { return r.handler }
+
+// Middlewares returns the middleware handlers.
+func (r Route) Middlewares() []fiber.Handler { return r.middlewares }
+
+// Summary returns the OpenAPI summary.
+func (r Route) Summary() string { return r.summary }
+
+// Description returns the OpenAPI description.
+func (r Route) Description() string { return r.description }
+
+// Tags returns the OpenAPI tags.
+func (r Route) Tags() []string { return r.tags }
+
+// Secured returns the list of security schemes required.
+func (r Route) Secured() []string { return r.secured }
+
+// Body returns the request body metadata.
+func (r Route) Body() *BodyMeta { return r.body }
+
+// Response returns the response metadata.
+func (r Route) Response() *ResponseMeta { return r.response }
+
+// QueryParams returns the query parameter definitions.
+func (r Route) QueryParams() []QueryParamMeta { return r.queryParams }
+
+// Deprecated returns whether the route is marked as deprecated.
+func (r Route) Deprecated() bool { return r.deprecated }
 
 // BodyMeta describes the request body.
 type BodyMeta struct {
@@ -78,7 +100,7 @@ func WithResponse[T any](statusCode int) *ResponseMeta {
 
 // — Builder methods —
 
-// WithBody declares the request body DTO. Accepts any struct, inline or imported.
+// WithBody sets the request body metadata for the route.
 func (r Route) WithBody(b *BodyMeta) Route {
 	r.body = b
 	return r
@@ -90,7 +112,7 @@ func (r Route) WithResponse(res *ResponseMeta) Route {
 	return r
 }
 
-// Tag adds a single OpenAPI tag to the route.
+// Tag adds an OpenAPI tag to classify the route.
 func (r Route) Tag(tag string) Route {
 	r.tags = append(r.tags, tag)
 	return r
@@ -121,7 +143,7 @@ func (r Route) Use(middlewares ...fiber.Handler) Route {
 	return r
 }
 
-// WithDeprecated marks the route as deprecated in OpenAPI.
+// WithDeprecated marks the route as deprecated in OpenAPI documentation.
 func (r Route) WithDeprecated() Route {
 	r.deprecated = true
 	return r
@@ -142,6 +164,7 @@ func (r Route) WithQueryParam(name, typ string, required bool, desc ...string) R
 // — HTTP method constructors —
 // Accept both controller methods and inline functions.
 
+// newRoute creates a new Route with the given HTTP method, path and handler.
 func newRoute(method, path string, handler func(*Ctx) error) Route {
 	return Route{
 		method:  method,
@@ -150,27 +173,27 @@ func newRoute(method, path string, handler func(*Ctx) error) Route {
 	}
 }
 
-// Constructor for GET method.
+// GET creates a GET route.
 func GET(path string, handler func(*Ctx) error) Route {
 	return newRoute("GET", path, handler)
 }
 
-// Constructor for POST method.
+// POST creates a POST route.
 func POST(path string, handler func(*Ctx) error) Route {
 	return newRoute("POST", path, handler)
 }
 
-// Constructor for PUT method.
+// PUT creates a PUT route.
 func PUT(path string, handler func(*Ctx) error) Route {
 	return newRoute("PUT", path, handler)
 }
 
-// Constructor for PATCH method.
+// PATCH creates a PATCH route.
 func PATCH(path string, handler func(*Ctx) error) Route {
 	return newRoute("PATCH", path, handler)
 }
 
-// Constructor for DELETE method.
+// DELETE creates a DELETE route.
 func DELETE(path string, handler func(*Ctx) error) Route {
 	return newRoute("DELETE", path, handler)
 }

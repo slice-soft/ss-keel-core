@@ -52,7 +52,7 @@ func (l *Logger) WithWriter(w io.Writer) *Logger {
 	return &Logger{isProduction: l.isProduction, writer: w, format: l.format}
 }
 
-// caller extracts the file and line of the real caller (2 levels up).
+// caller returns the filename and line number of the calling function.
 func (l *Logger) caller() (string, int) {
 	_, file, line, ok := runtime.Caller(2)
 	if !ok {
@@ -61,6 +61,7 @@ func (l *Logger) caller() (string, int) {
 	return path.Base(file), line
 }
 
+// log writes a formatted log message at the specified level with file and line information.
 func (l *Logger) log(level LogLevel, fileName string, line int, format string, args ...interface{}) {
 	message := fmt.Sprintf(format, args...)
 

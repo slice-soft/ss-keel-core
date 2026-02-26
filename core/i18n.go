@@ -6,7 +6,7 @@ type Translator interface {
 	Locales() []string
 }
 
-// Lang reads the Accept-Language header and returns the primary language tag.
+// Lang extracts the language from the Accept-Language header.
 // Returns "en" if the header is absent or empty.
 func (c *Ctx) Lang() string {
 	lang := c.Get("Accept-Language")
@@ -22,8 +22,8 @@ func (c *Ctx) Lang() string {
 	return lang
 }
 
-// T translates a key using the Translator stored in Fiber locals.
-// Returns the key as-is when no Translator is registered.
+// T translates a key using the configured Translator.
+// Returns the key unchanged if no Translator is registered.
 func (c *Ctx) T(key string, args ...any) string {
 	t, ok := c.Locals("_keel_translator").(Translator)
 	if !ok || t == nil {

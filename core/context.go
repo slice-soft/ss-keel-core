@@ -10,7 +10,7 @@ type Ctx struct {
 	*fiber.Ctx
 }
 
-// WrapHandler convierte un handler de Keel en un fiber.Handler.
+// WrapHandler converts a Keel handler function into a Fiber handler.
 func WrapHandler(h func(*Ctx) error) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		return h(&Ctx{c})
@@ -38,12 +38,12 @@ func (c *Ctx) ParseBody(dst any) error {
 	return nil
 }
 
-// SetUser stores the authenticated user in Fiber locals.
+// SetUser stores the authenticated user in Fiber locals for later retrieval.
 func (c *Ctx) SetUser(user any) {
 	c.Locals("_keel_user", user)
 }
 
-// User retrieves the authenticated user stored by SetUser.
+// User retrieves the authenticated user previously stored by SetUser.
 func (c *Ctx) User() any {
 	return c.Locals("_keel_user")
 }
@@ -56,22 +56,22 @@ func UserAs[T any](c *Ctx) (T, bool) {
 	return v, ok
 }
 
-// OK responds with 200 and JSON.
+// OK responds with HTTP 200 and a JSON body.
 func (c *Ctx) OK(data any) error {
 	return c.Status(fiber.StatusOK).JSON(data)
 }
 
-// Created responds with 201 and JSON.
+// Created responds with HTTP 201 and a JSON body.
 func (c *Ctx) Created(data any) error {
 	return c.Status(fiber.StatusCreated).JSON(data)
 }
 
-// NoContent responds with 204.
+// NoContent responds with HTTP 204 No Content.
 func (c *Ctx) NoContent() error {
 	return c.Status(fiber.StatusNoContent).Send(nil)
 }
 
-// NotFound responds with 404 and message.
+// NotFound responds with HTTP 404 and an optional message.
 func (c *Ctx) NotFound(message ...string) error {
 	msg := "resource not found"
 	if len(message) > 0 {
