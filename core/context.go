@@ -38,6 +38,24 @@ func (c *Ctx) ParseBody(dst any) error {
 	return nil
 }
 
+// SetUser stores the authenticated user in Fiber locals.
+func (c *Ctx) SetUser(user any) {
+	c.Locals("_keel_user", user)
+}
+
+// User retrieves the authenticated user stored by SetUser.
+func (c *Ctx) User() any {
+	return c.Locals("_keel_user")
+}
+
+// UserAs is a generic package-level function that extracts the authenticated
+// user stored in Fiber locals and type-asserts it to T.
+// Returns the zero value and false when no user is set or the type doesn't match.
+func UserAs[T any](c *Ctx) (T, bool) {
+	v, ok := c.Locals("_keel_user").(T)
+	return v, ok
+}
+
 // OK responds with 200 and JSON.
 func (c *Ctx) OK(data any) error {
 	return c.Status(fiber.StatusOK).JSON(data)
