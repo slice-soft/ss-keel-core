@@ -36,6 +36,10 @@ func SwaggerUIHandler(specPath string) fiber.Handler {
     deepLinking: true,
     displayRequestDuration: true,
     filter: true,
+    persistAuthorization: true,
+    tryItOutEnabled: true,
+    docExpansion: "list",
+    defaultModelsExpandDepth: 3,
   })
 </script>
 </body>
