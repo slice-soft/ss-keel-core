@@ -1,4 +1,4 @@
-module github.com/slicesoft/ss-keel-core
+module github.com/slice-soft/ss-keel-core
 
 go 1.21
 

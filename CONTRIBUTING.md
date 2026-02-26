@@ -93,20 +93,77 @@ go test ./... -cover
 
 ## Commit Messages
 
-Use clear, imperative commit messages:
+Keel follows **Conventional Commits** to support:
+
+- Automated semantic versioning
+- Auto-generated changelogs
+- Predictable releases
+
+### Format
 
 ```
-fix: handle nil body in ParseBody
-feat: add GetEnvUint config helper
-docs: add validation examples to README
-test: add table-driven tests for route builder
-refactor: simplify openapi path conversion
+<type>(optional-scope): short descriptive summary
 ```
 
-Format: `type: short description`
+### Examples
 
-Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`
+```
+feat(config): add GetEnvUint helper
+fix(parser): handle nil body in ParseBody
+docs(readme): add validation examples
+test(router): add table-driven tests for route builder
+refactor(core): simplify openapi path conversion
+chore(ci): update workflow permissions
+```
 
+### Rules
+
+- Use present tense
+- Keep messages concise but descriptive
+- Do not use vague messages like `update`, `fix stuff`, or `wip`
+- Do not mix unrelated concerns in a single commit
+- Separate features, fixes, refactors, and docs into different commits
+
+### Allowed Types
+
+- `feat` — new feature
+- `fix` — bug fix
+- `docs` — documentation changes
+- `test` — test additions or modifications
+- `refactor` — code restructuring without behavior change
+- `chore` — maintenance, tooling, config
+- `ci` — CI/CD updates
+- `perf` — performance improvements
+
+---
+
+## Merge Strategy
+
+Keel uses **Squash & Merge**.
+
+This means:
+
+- Development may contain multiple structured commits
+- The Pull Request title becomes the final commit in `main`
+- The PR title MUST follow Conventional Commits format
+
+### PR Title Format
+
+```
+<type>(optional-scope): high-level summary
+```
+
+Example:
+
+```
+feat(server): implement graceful shutdown
+```
+
+### Important
+
+- Internal commits should remain meaningful
+- The PR title should summarize the overall change
+- The semver label (`patch`, `minor`, `major`) must match the impact of the PR
 ---
 
 ## Testing
@@ -154,7 +211,7 @@ When opening a bug report, include:
 - Expected vs actual behavior
 - Error output if applicable
 
-For security vulnerabilities, do **not** open a public issue. Contact us directly at `security@slicesoft.dev`.
+For security vulnerabilities, do **not** open a public issue. Contact us directly at `slicesoft@juancadev.com` with details.
 
 ---
 

@@ -2,7 +2,7 @@ package core
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/slicesoft/ss-keel-core/validation"
+	"github.com/slice-soft/ss-keel-core/validation"
 )
 
 // Ctx is the Keel wrapper over fiber.Ctx.

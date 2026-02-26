@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/slicesoft/ss-keel-core/logger"
+	"github.com/slice-soft/ss-keel-core/logger"
 )
 
 // keelLogger replaces Fiber's default logger middleware with one

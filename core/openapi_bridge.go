@@ -1,6 +1,6 @@
 package core
 
-import "github.com/slicesoft/ss-keel-core/openapi"
+import "github.com/slice-soft/ss-keel-core/openapi"
 
 func toOpenAPIRoutes(routes []Route) []openapi.RouteInput {
 	var out []openapi.RouteInput
