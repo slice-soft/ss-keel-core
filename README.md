@@ -1,4 +1,4 @@
-<img src="assets/boat.svg" width="400" />
+<img src="https://cdn.slicesoft.dev/boat.svg" width="400" />
 
 # Keel
 
@@ -32,4 +32,17 @@ Check out the documentation at [keel-go.dev](https://keel-go.dev) for guides and
 
 
 ## Contributing
-https://keel-go.dev/contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup and repository-specific rules.
+The base workflow, commit conventions, and community standards live in [ss-community](https://github.com/slice-soft/ss-community/blob/main/CONTRIBUTING.md).
+
+## Community
+
+| Document | |
+|---|---|
+| [CONTRIBUTING.md](https://github.com/slice-soft/ss-community/blob/main/CONTRIBUTING.md) | Workflow, commit conventions, and PR guidelines |
+| [GOVERNANCE.md](https://github.com/slice-soft/ss-community/blob/main/GOVERNANCE.md) | Decision-making, roles, and release process |
+| [CODE_OF_CONDUCT.md](https://github.com/slice-soft/ss-community/blob/main/CODE_OF_CONDUCT.md) | Community standards |
+| [VERSIONING.md](https://github.com/slice-soft/ss-community/blob/main/VERSIONING.md) | SemVer policy and breaking changes |
+| [SECURITY.md](https://github.com/slice-soft/ss-community/blob/main/SECURITY.md) | How to report vulnerabilities |
+| [MAINTAINERS.md](https://github.com/slice-soft/ss-community/blob/main/MAINTAINERS.md) | Active maintainers |
