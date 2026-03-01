@@ -33,6 +33,7 @@ go.work
 # Build output
 bin/
 dist/
+docs/
 
 # Temporary files
 tmp/
