@@ -199,5 +199,5 @@ type mockHealthChecker struct {
 	err  error
 }
 
-func (m *mockHealthChecker) Name() string               { return m.name }
+func (m *mockHealthChecker) Name() string                  { return m.name }
 func (m *mockHealthChecker) Check(_ context.Context) error { return m.err }

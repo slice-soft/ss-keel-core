@@ -33,7 +33,10 @@ func TestSetUserAndUser(t *testing.T) {
 }
 
 func TestUserAs(t *testing.T) {
-	type AuthUser struct{ ID string; Role string }
+	type AuthUser struct {
+		ID   string
+		Role string
+	}
 
 	t.Run("correct type returns value and true", func(t *testing.T) {
 		app := newTestApp("GET", "/test", func(c *Ctx) error {
