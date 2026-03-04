@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -94,4 +95,52 @@ func TestListenReturnsErrorOnInvalidPort(t *testing.T) {
 	if !s.started {
 		t.Fatal("scheduler Start() should be called before listen failure")
 	}
+}
+
+func TestResolveListenPortWhenBusy(t *testing.T) {
+	ln, err := net.Listen("tcp", ":0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ln.Close()
+
+	busyPort := ln.Addr().(*net.TCPAddr).Port
+	app := New(KConfig{
+		DisableHealth: true,
+		Port:          busyPort,
+		Env:           "production",
+	})
+
+	if err := app.resolveListenPort(); err != nil {
+		t.Fatal(err)
+	}
+	if app.config.Port == busyPort {
+		t.Fatalf("expected fallback port when %d is busy", busyPort)
+	}
+	if app.config.Port < busyPort {
+		t.Fatalf("port should not decrease: got %d, start %d", app.config.Port, busyPort)
+	}
+}
+
+func TestFirstAvailablePort(t *testing.T) {
+	t.Run("returns error for invalid start port", func(t *testing.T) {
+		_, err := firstAvailablePort(-1, 10)
+		if err == nil {
+			t.Fatal("expected error for invalid start port")
+		}
+	})
+
+	t.Run("returns error when maxChecks exhausted", func(t *testing.T) {
+		ln, err := net.Listen("tcp", ":0")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer ln.Close()
+
+		busyPort := ln.Addr().(*net.TCPAddr).Port
+		_, err = firstAvailablePort(busyPort, 1)
+		if err == nil {
+			t.Fatal("expected error when no port is available in scan window")
+		}
+	})
 }

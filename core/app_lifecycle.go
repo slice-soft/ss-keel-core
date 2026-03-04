@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,15 +15,54 @@ import (
 
 // Listen starts the HTTP server with graceful shutdown support.
 func (a *App) Listen() error {
-	a.registerDocsRoutes()
-
 	if a.scheduler != nil {
 		a.scheduler.Start()
 	}
 
+	if err := a.resolveListenPort(); err != nil {
+		return err
+	}
+
+	a.registerDocsRoutes()
+
 	a.printBanner()
 
 	return a.serveWithGracefulShutdown()
+}
+
+func (a *App) resolveListenPort() error {
+	const maxPortChecks = 100
+
+	selected, err := firstAvailablePort(a.config.Port, maxPortChecks)
+	if err != nil {
+		return err
+	}
+	if selected != a.config.Port {
+		a.logger.Warn("Port %d is in use, switching to %d", a.config.Port, selected)
+		a.config.Port = selected
+	}
+	return nil
+}
+
+func firstAvailablePort(startPort, maxChecks int) (int, error) {
+	if startPort < 1 || startPort > 65535 {
+		return 0, fmt.Errorf("invalid listen port: %d", startPort)
+	}
+	if maxChecks <= 0 {
+		return 0, fmt.Errorf("invalid maxChecks: %d", maxChecks)
+	}
+
+	port := startPort
+	for i := 0; i < maxChecks && port <= 65535; i++ {
+		ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+		if err == nil {
+			_ = ln.Close()
+			return port, nil
+		}
+		port++
+	}
+
+	return 0, fmt.Errorf("no available port found from %d after %d attempts", startPort, maxChecks)
 }
 
 func (a *App) registerDocsRoutes() {
