@@ -46,22 +46,22 @@ func toOpenAPIRoutes(routes []Route) []openapi.RouteInput {
 	var out []openapi.RouteInput
 	for _, r := range routes {
 		ri := openapi.RouteInput{
-			Method:      r.method,
-			Path:        r.path,
-			Summary:     r.summary,
-			Description: r.description,
-			Tags:        r.tags,
-			Secured:     r.secured,
-			Deprecated:  r.deprecated,
+			Method:      r.Method(),
+			Path:        r.Path(),
+			Summary:     r.Summary(),
+			Description: r.Description(),
+			Tags:        r.Tags(),
+			Secured:     r.Secured(),
+			Deprecated:  r.Deprecated(),
 		}
-		if r.body != nil {
-			ri.Body = r.body.Type
+		if r.Body() != nil {
+			ri.Body = r.Body().Type
 		}
-		if r.response != nil {
-			ri.Response = r.response.Type
-			ri.StatusCode = r.response.StatusCode
+		if r.Response() != nil {
+			ri.Response = r.Response().Type
+			ri.StatusCode = r.Response().StatusCode
 		}
-		for _, qp := range r.queryParams {
+		for _, qp := range r.QueryParams() {
 			ri.QueryParams = append(ri.QueryParams, openapi.QueryParamInput{
 				Name:        qp.Name,
 				Type:        qp.Type,

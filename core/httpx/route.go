@@ -1,4 +1,4 @@
-package core
+package httpx
 
 import "github.com/gofiber/fiber/v2"
 
@@ -10,22 +10,33 @@ type QueryParamMeta struct {
 	Required    bool
 }
 
-// Route is the result of the builder.
+// Route is the result of the route builder.
 type Route struct {
 	method      string
 	path        string
 	handler     fiber.Handler
 	middlewares []fiber.Handler
 
-	// OpenAPI
 	summary     string
 	description string
 	tags        []string
-	secured     []string // security schemes: "bearerAuth", "apiKey", etc.
+	secured     []string
 	body        *BodyMeta
 	response    *ResponseMeta
 	queryParams []QueryParamMeta
 	deprecated  bool
+}
+
+// BodyMeta describes the request body.
+type BodyMeta struct {
+	Type     any
+	Required bool
+}
+
+// ResponseMeta describes the expected response.
+type ResponseMeta struct {
+	Type       any
+	StatusCode int
 }
 
 // Method returns the HTTP method of the route.
@@ -64,41 +75,17 @@ func (r Route) QueryParams() []QueryParamMeta { return r.queryParams }
 // Deprecated returns whether the route is marked as deprecated.
 func (r Route) Deprecated() bool { return r.deprecated }
 
-// BodyMeta describes the request body.
-type BodyMeta struct {
-	Type     any
-	Required bool
-}
-
-// ResponseMeta describes the expected response.
-type ResponseMeta struct {
-	Type       any
-	StatusCode int
-}
-
-// — Standalone generic helpers —
-// Go does not allow type parameters on methods,
-// so WithBody and WithResponse are standalone functions.
-
 // WithBody creates a BodyMeta from a generic type.
-// Accepts any struct, inline or imported.
-//
-//	core.WithBody[dto.CreateUserDTO]()
-//	core.WithBody[struct{ Name string `json:"name"` }]()
 func WithBody[T any]() *BodyMeta {
 	var t T
 	return &BodyMeta{Type: t, Required: true}
 }
 
 // WithResponse creates a ResponseMeta from a generic type and status code.
-//
-//	core.WithResponse[dto.UserDTO](201)
 func WithResponse[T any](statusCode int) *ResponseMeta {
 	var t T
 	return &ResponseMeta{Type: t, StatusCode: statusCode}
 }
-
-// — Builder methods —
 
 // WithBody sets the request body metadata for the route.
 func (r Route) WithBody(b *BodyMeta) Route {
@@ -127,19 +114,27 @@ func (r Route) Describe(summary string, description ...string) Route {
 	return r
 }
 
-// Secured documents the required security schemes in OpenAPI.
-// Each scheme corresponds to an authentication middleware.
-// Example: .WithSecured("bearerAuth") → lock icon in Swagger UI
-// Example: .WithSecured("bearerAuth", "apiKey") → multiple schemes
+// WithSecured documents the required security schemes in OpenAPI.
 func (r Route) WithSecured(schemes ...string) Route {
 	r.secured = append(r.secured, schemes...)
 	return r
 }
 
 // Use adds execution middlewares to the route.
-// Middlewares are NOT documented in OpenAPI — use WithSecured() for that.
 func (r Route) Use(middlewares ...fiber.Handler) Route {
 	r.middlewares = append(r.middlewares, middlewares...)
+	return r
+}
+
+// PrependMiddlewares prepends middlewares before existing route middlewares.
+func (r Route) PrependMiddlewares(middlewares ...fiber.Handler) Route {
+	r.middlewares = append(append([]fiber.Handler{}, middlewares...), r.middlewares...)
+	return r
+}
+
+// WithPathPrefix prepends a path prefix to the route path.
+func (r Route) WithPathPrefix(prefix string) Route {
+	r.path = prefix + r.path
 	return r
 }
 
@@ -150,8 +145,6 @@ func (r Route) WithDeprecated() Route {
 }
 
 // WithQueryParam documents a query string parameter in OpenAPI.
-//
-//	GET("/users").WithQueryParam("status", "string", false, "Filter by status")
 func (r Route) WithQueryParam(name, typ string, required bool, desc ...string) Route {
 	qp := QueryParamMeta{Name: name, Type: typ, Required: required}
 	if len(desc) > 0 {
@@ -161,39 +154,35 @@ func (r Route) WithQueryParam(name, typ string, required bool, desc ...string) R
 	return r
 }
 
-// — HTTP method constructors —
-// Accept both controller methods and inline functions.
-
-// newRoute creates a new Route with the given HTTP method, path and handler.
-func newRoute(method, path string, handler func(*Ctx) error) Route {
+func newRoute(method, path string, handler fiber.Handler) Route {
 	return Route{
 		method:  method,
 		path:    path,
-		handler: WrapHandler(handler),
+		handler: handler,
 	}
 }
 
 // GET creates a GET route.
-func GET(path string, handler func(*Ctx) error) Route {
+func GET(path string, handler fiber.Handler) Route {
 	return newRoute("GET", path, handler)
 }
 
 // POST creates a POST route.
-func POST(path string, handler func(*Ctx) error) Route {
+func POST(path string, handler fiber.Handler) Route {
 	return newRoute("POST", path, handler)
 }
 
 // PUT creates a PUT route.
-func PUT(path string, handler func(*Ctx) error) Route {
+func PUT(path string, handler fiber.Handler) Route {
 	return newRoute("PUT", path, handler)
 }
 
 // PATCH creates a PATCH route.
-func PATCH(path string, handler func(*Ctx) error) Route {
+func PATCH(path string, handler fiber.Handler) Route {
 	return newRoute("PATCH", path, handler)
 }
 
 // DELETE creates a DELETE route.
-func DELETE(path string, handler func(*Ctx) error) Route {
+func DELETE(path string, handler fiber.Handler) Route {
 	return newRoute("DELETE", path, handler)
 }

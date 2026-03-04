@@ -1,4 +1,4 @@
-package core
+package httpx
 
 // PageQuery holds pagination parameters parsed from query string.
 type PageQuery struct {
