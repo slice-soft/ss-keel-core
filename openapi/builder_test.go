@@ -144,7 +144,7 @@ func TestReflectSchema(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := reflectSchema(tt.input)
+			got := reflectSchema(tt.input, map[string]any{})
 
 			if got["type"] != tt.wantType {
 				t.Errorf("type = %v, want %v", got["type"], tt.wantType)
@@ -193,7 +193,7 @@ func TestReflectSchemaFormats(t *testing.T) {
 		Score float64 `json:"score"`
 	}
 
-	got := reflectSchema(formatsDTO{})
+	got := reflectSchema(formatsDTO{}, map[string]any{})
 	props, ok := got["properties"].(map[string]any)
 	if !ok {
 		t.Fatal("properties should be a map")
@@ -228,7 +228,7 @@ func TestReflectSchemaMinMax(t *testing.T) {
 		Age  int    `json:"age"  validate:"min=18,max=120"`
 	}
 
-	got := reflectSchema(minMaxDTO{})
+	got := reflectSchema(minMaxDTO{}, map[string]any{})
 	props, ok := got["properties"].(map[string]any)
 	if !ok {
 		t.Fatal("properties should be a map")
@@ -254,6 +254,138 @@ func TestReflectSchemaMinMax(t *testing.T) {
 	}
 	if age["maximum"] != 120 {
 		t.Errorf("age maximum = %v, want 120", age["maximum"])
+	}
+}
+
+func TestReflectSchemaNested(t *testing.T) {
+	type AddressDTO struct {
+		Street string `json:"street"`
+	}
+	type PersonDTO struct {
+		Name    string     `json:"name"`
+		Address AddressDTO `json:"address"`
+	}
+
+	schemas := map[string]any{}
+	got := reflectSchema(PersonDTO{}, schemas)
+
+	props, ok := got["properties"].(map[string]any)
+	if !ok {
+		t.Fatal("properties should be a map")
+	}
+	addr, ok := props["address"].(map[string]any)
+	if !ok {
+		t.Fatal("address property not found")
+	}
+	if addr["$ref"] != "#/components/schemas/AddressDTO" {
+		t.Errorf("address $ref = %v, want #/components/schemas/AddressDTO", addr["$ref"])
+	}
+	if _, exists := schemas["AddressDTO"]; !exists {
+		t.Error("AddressDTO should be registered in schemas")
+	}
+}
+
+func TestReflectSchemaSlice(t *testing.T) {
+	type TagDTO struct {
+		Name string `json:"name"`
+	}
+	type PostDTO struct {
+		Tags []TagDTO `json:"tags"`
+	}
+
+	schemas := map[string]any{}
+	got := reflectSchema(PostDTO{}, schemas)
+
+	props, ok := got["properties"].(map[string]any)
+	if !ok {
+		t.Fatal("properties should be a map")
+	}
+	tags, ok := props["tags"].(map[string]any)
+	if !ok {
+		t.Fatal("tags property not found")
+	}
+	if tags["type"] != "array" {
+		t.Errorf("tags type = %v, want array", tags["type"])
+	}
+	items, ok := tags["items"].(map[string]any)
+	if !ok {
+		t.Fatal("tags items not found")
+	}
+	if items["$ref"] != "#/components/schemas/TagDTO" {
+		t.Errorf("items.$ref = %v, want #/components/schemas/TagDTO", items["$ref"])
+	}
+	if _, exists := schemas["TagDTO"]; !exists {
+		t.Error("TagDTO should be registered in schemas")
+	}
+}
+
+func TestReflectSchemaPointer(t *testing.T) {
+	type DTO struct {
+		Name *string `json:"name"`
+	}
+
+	schemas := map[string]any{}
+	got := reflectSchema(DTO{}, schemas)
+
+	props, ok := got["properties"].(map[string]any)
+	if !ok {
+		t.Fatal("properties should be a map")
+	}
+	name, ok := props["name"].(map[string]any)
+	if !ok {
+		t.Fatal("name property not found")
+	}
+	if name["nullable"] != true {
+		t.Errorf("name nullable = %v, want true", name["nullable"])
+	}
+	if name["type"] != "string" {
+		t.Errorf("name type = %v, want string", name["type"])
+	}
+}
+
+func TestReflectSchemaEnum(t *testing.T) {
+	type DTO struct {
+		Role string `json:"role" validate:"required,oneof=admin user"`
+	}
+
+	schemas := map[string]any{}
+	got := reflectSchema(DTO{}, schemas)
+
+	props, ok := got["properties"].(map[string]any)
+	if !ok {
+		t.Fatal("properties should be a map")
+	}
+	role, ok := props["role"].(map[string]any)
+	if !ok {
+		t.Fatal("role property not found")
+	}
+	enum, ok := role["enum"].([]string)
+	if !ok {
+		t.Fatalf("role enum should be []string, got %T", role["enum"])
+	}
+	if len(enum) != 2 || enum[0] != "admin" || enum[1] != "user" {
+		t.Errorf("role enum = %v, want [admin user]", enum)
+	}
+}
+
+func TestReflectSchemaDefault(t *testing.T) {
+	type DTO struct {
+		Status string `json:"status" default:"active"`
+	}
+
+	schemas := map[string]any{}
+	got := reflectSchema(DTO{}, schemas)
+
+	props, ok := got["properties"].(map[string]any)
+	if !ok {
+		t.Fatal("properties should be a map")
+	}
+	status, ok := props["status"].(map[string]any)
+	if !ok {
+		t.Fatal("status property not found")
+	}
+	if status["default"] != "active" {
+		t.Errorf("status default = %v, want active", status["default"])
 	}
 }
 
@@ -383,5 +515,304 @@ func TestBuild(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestBuildQueryParameters(t *testing.T) {
+	tests := []struct {
+		name         string
+		params       []QueryParamInput
+		wantLen      int
+		wantNames    []string
+		wantTypes    []string
+		wantRequired []bool
+		wantDescs    []string
+	}{
+		{
+			name: "single optional string param",
+			params: []QueryParamInput{
+				{Name: "status", Type: "string", Required: false},
+			},
+			wantLen:      1,
+			wantNames:    []string{"status"},
+			wantTypes:    []string{"string"},
+			wantRequired: []bool{false},
+		},
+		{
+			name: "required param with description",
+			params: []QueryParamInput{
+				{Name: "q", Type: "string", Required: true, Description: "Search query"},
+			},
+			wantLen:      1,
+			wantNames:    []string{"q"},
+			wantRequired: []bool{true},
+			wantDescs:    []string{"Search query"},
+		},
+		{
+			name: "empty type defaults to string",
+			params: []QueryParamInput{
+				{Name: "filter"},
+			},
+			wantLen:   1,
+			wantNames: []string{"filter"},
+			wantTypes: []string{"string"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := buildQueryParameters(tt.params)
+			if len(got) != tt.wantLen {
+				t.Errorf("len = %v, want %v", len(got), tt.wantLen)
+				return
+			}
+			for i, p := range got {
+				if len(tt.wantNames) > i && p["name"] != tt.wantNames[i] {
+					t.Errorf("[%d] name = %v, want %v", i, p["name"], tt.wantNames[i])
+				}
+				if p["in"] != "query" {
+					t.Errorf("[%d] in = %v, want query", i, p["in"])
+				}
+				if len(tt.wantRequired) > i && p["required"] != tt.wantRequired[i] {
+					t.Errorf("[%d] required = %v, want %v", i, p["required"], tt.wantRequired[i])
+				}
+				if len(tt.wantDescs) > i && tt.wantDescs[i] != "" && p["description"] != tt.wantDescs[i] {
+					t.Errorf("[%d] description = %v, want %v", i, p["description"], tt.wantDescs[i])
+				}
+				schema, ok := p["schema"].(map[string]any)
+				if !ok {
+					t.Errorf("[%d] schema missing", i)
+					continue
+				}
+				if len(tt.wantTypes) > i && schema["type"] != tt.wantTypes[i] {
+					t.Errorf("[%d] schema.type = %v, want %v", i, schema["type"], tt.wantTypes[i])
+				}
+			}
+		})
+	}
+}
+
+func TestBuildIncludesQueryParamsInOperation(t *testing.T) {
+	spec := Build(BuildInput{
+		Title:   "Test",
+		Version: "1.0.0",
+		Routes: []RouteInput{
+			{
+				Method: "GET",
+				Path:   "/users",
+				QueryParams: []QueryParamInput{
+					{Name: "page", Type: "integer", Required: false},
+					{Name: "limit", Type: "integer", Required: false},
+				},
+			},
+		},
+	})
+
+	pathItem, ok := spec.Paths["/users"].(map[string]any)
+	if !ok {
+		t.Fatal("path /users not found")
+	}
+	operation, ok := pathItem["get"].(map[string]any)
+	if !ok {
+		t.Fatal("operation get not found")
+	}
+	params, ok := operation["parameters"].([]map[string]any)
+	if !ok {
+		t.Fatal("parameters should be []map[string]any")
+	}
+	if len(params) != 2 {
+		t.Errorf("parameters len = %v, want 2", len(params))
+	}
+}
+
+func TestBuildPathParameters(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		wantLen  int
+		wantName string
+	}{
+		{name: "no path params", path: "/users", wantLen: 0},
+		{name: "single path param", path: "/users/:id", wantLen: 1, wantName: "id"},
+		{name: "multiple path params", path: "/users/:userId/posts/:postId", wantLen: 2},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := buildPathParameters(tt.path)
+			if len(got) != tt.wantLen {
+				t.Errorf("len = %v, want %v", len(got), tt.wantLen)
+				return
+			}
+			if tt.wantLen > 0 {
+				if got[0]["in"] != "path" {
+					t.Errorf("in = %v, want path", got[0]["in"])
+				}
+				if got[0]["required"] != true {
+					t.Errorf("required = %v, want true", got[0]["required"])
+				}
+				if tt.wantName != "" && got[0]["name"] != tt.wantName {
+					t.Errorf("name = %v, want %v", got[0]["name"], tt.wantName)
+				}
+			}
+		})
+	}
+}
+
+func TestBuildAutoErrorResponses(t *testing.T) {
+	t.Run("body present adds 400 and 422", func(t *testing.T) {
+		type B struct{ Name string `json:"name"` }
+		route := RouteInput{Method: "POST", Path: "/users", Body: B{}}
+		got := buildAutoErrorResponses(route)
+		if _, ok := got["400"]; !ok {
+			t.Error("missing 400 response")
+		}
+		if _, ok := got["422"]; !ok {
+			t.Error("missing 422 response")
+		}
+	})
+
+	t.Run("secured adds 401 and 403", func(t *testing.T) {
+		route := RouteInput{Method: "GET", Path: "/users", Secured: []string{"bearerAuth"}}
+		got := buildAutoErrorResponses(route)
+		if _, ok := got["401"]; !ok {
+			t.Error("missing 401 response")
+		}
+		if _, ok := got["403"]; !ok {
+			t.Error("missing 403 response")
+		}
+	})
+
+	t.Run("path params adds 404", func(t *testing.T) {
+		route := RouteInput{Method: "GET", Path: "/users/:id"}
+		got := buildAutoErrorResponses(route)
+		if _, ok := got["404"]; !ok {
+			t.Error("missing 404 response")
+		}
+	})
+
+	t.Run("no path params no 404", func(t *testing.T) {
+		route := RouteInput{Method: "GET", Path: "/users"}
+		got := buildAutoErrorResponses(route)
+		if _, ok := got["404"]; ok {
+			t.Error("404 should not be present for route without path params")
+		}
+	})
+
+	t.Run("always adds 500", func(t *testing.T) {
+		route := RouteInput{Method: "GET", Path: "/users"}
+		got := buildAutoErrorResponses(route)
+		if _, ok := got["500"]; !ok {
+			t.Error("missing 500 response")
+		}
+	})
+}
+
+func TestBuildOperationID(t *testing.T) {
+	tests := []struct {
+		method string
+		path   string
+		want   string
+	}{
+		{"GET", "/users/:id", "getUsersById"},
+		{"POST", "/v1/users", "postV1Users"},
+		{"DELETE", "/users/:id", "deleteUsersById"},
+		{"GET", "/users", "getUsers"},
+		{"PATCH", "/users/:id/posts/:postId", "patchUsersByIdPostsByPostId"},
+	}
+	for _, tt := range tests {
+		got := generateOperationID(tt.method, tt.path)
+		if got != tt.want {
+			t.Errorf("generateOperationID(%q, %q) = %v, want %v", tt.method, tt.path, got, tt.want)
+		}
+	}
+}
+
+func TestBuildDeprecated(t *testing.T) {
+	spec := Build(BuildInput{
+		Title:   "Test",
+		Version: "1.0.0",
+		Routes: []RouteInput{
+			{Method: "GET", Path: "/users", Deprecated: true},
+		},
+	})
+
+	pathItem, ok := spec.Paths["/users"].(map[string]any)
+	if !ok {
+		t.Fatal("path /users not found")
+	}
+	operation, ok := pathItem["get"].(map[string]any)
+	if !ok {
+		t.Fatal("operation get not found")
+	}
+	if operation["deprecated"] != true {
+		t.Errorf("deprecated = %v, want true", operation["deprecated"])
+	}
+}
+
+func TestBuildServersAndTags(t *testing.T) {
+	spec := Build(BuildInput{
+		Title:   "Test",
+		Version: "1.0.0",
+		Servers: []ServerInfo{{URL: "https://api.example.com", Description: "Production"}},
+		Tags:    []TagInfo{{Name: "users", Description: "User operations"}},
+		Routes:  []RouteInput{},
+	})
+
+	if len(spec.Servers) != 1 || spec.Servers[0].URL != "https://api.example.com" {
+		t.Errorf("servers = %v, want [{URL: https://api.example.com}]", spec.Servers)
+	}
+	if len(spec.Tags) != 1 || spec.Tags[0].Name != "users" {
+		t.Errorf("tags = %v, want [{Name: users}]", spec.Tags)
+	}
+}
+
+func TestBuildStandardSchemas(t *testing.T) {
+	spec := Build(BuildInput{
+		Title:   "Test",
+		Version: "1.0.0",
+		Routes:  []RouteInput{},
+	})
+
+	for _, name := range []string{"KErrorResponse", "ValidationErrorResponse", "ValidationErrorItem"} {
+		if _, exists := spec.Components.Schemas[name]; !exists {
+			t.Errorf("missing schema %q in components/schemas", name)
+		}
+	}
+}
+
+func TestBuildOperationIncludesPathParamsWhenPresent(t *testing.T) {
+	spec := Build(BuildInput{
+		Title:   "Test",
+		Version: "1.0.0",
+		Routes: []RouteInput{
+			{Method: "GET", Path: "/users/:id"},
+		},
+	})
+
+	pathItem, ok := spec.Paths["/users/{id}"].(map[string]any)
+	if !ok {
+		t.Fatal("path /users/{id} not found")
+	}
+	operation, ok := pathItem["get"].(map[string]any)
+	if !ok {
+		t.Fatal("operation get not found")
+	}
+	params, ok := operation["parameters"].([]map[string]any)
+	if !ok {
+		t.Fatal("parameters should be []map[string]any")
+	}
+	if len(params) != 1 {
+		t.Errorf("parameters len = %v, want 1", len(params))
+		return
+	}
+	if params[0]["name"] != "id" {
+		t.Errorf("param name = %v, want id", params[0]["name"])
+	}
+	if params[0]["in"] != "path" {
+		t.Errorf("param in = %v, want path", params[0]["in"])
+	}
+	if params[0]["required"] != true {
+		t.Errorf("param required = %v, want true", params[0]["required"])
 	}
 }

@@ -31,6 +31,7 @@ func Validate(s any) []FieldError {
 	return errs
 }
 
+// humanMessage returns a user-friendly error message for a validation error.
 func humanMessage(e validator.FieldError) string {
 	switch e.Tag() {
 	case "required":

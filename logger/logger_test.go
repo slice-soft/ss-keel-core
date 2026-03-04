@@ -2,6 +2,7 @@ package logger
 
 import (
 	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -146,7 +147,7 @@ func TestDebug(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			log, buf := newTestLogger(tt.isProduction)
-			log.Debug(tt.format)
+			log.Debug("%s", tt.format)
 
 			output := buf.String()
 			hasOutput := len(output) > 0
@@ -238,6 +239,87 @@ func TestWithWriter(t *testing.T) {
 			}
 			if custom.isProduction != original.isProduction {
 				t.Error("WithWriter() should preserve isProduction")
+			}
+			if custom.format != original.format {
+				t.Error("WithWriter() should preserve format")
+			}
+		})
+	}
+}
+
+func TestNewLoggerWithFormat(t *testing.T) {
+	t.Run("text format by default", func(t *testing.T) {
+		log := NewLogger(false)
+		if log.format != LogFormatText {
+			t.Errorf("format = %v, want text", log.format)
+		}
+	})
+
+	t.Run("JSON format constructor", func(t *testing.T) {
+		log := NewLoggerWithFormat(false, LogFormatJSON)
+		if log.format != LogFormatJSON {
+			t.Errorf("format = %v, want json", log.format)
+		}
+	})
+}
+
+func TestJSONLogFormat(t *testing.T) {
+	tests := []struct {
+		name      string
+		logFunc   func(l *Logger)
+		wantLevel string
+		wantMsg   string
+	}{
+		{
+			name:      "info produces valid JSON",
+			logFunc:   func(l *Logger) { l.Info("server started on port %d", 3000) },
+			wantLevel: "INFO",
+			wantMsg:   "server started on port 3000",
+		},
+		{
+			name:      "warn produces valid JSON",
+			logFunc:   func(l *Logger) { l.Warn("something failed") },
+			wantLevel: "WARN",
+			wantMsg:   "something failed",
+		},
+		{
+			name:      "debug produces valid JSON in dev",
+			logFunc:   func(l *Logger) { l.Debug("debug event") },
+			wantLevel: "DEBUG",
+			wantMsg:   "debug event",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			log := NewLoggerWithFormat(false, LogFormatJSON).WithWriter(buf)
+			tt.logFunc(log)
+
+			line := strings.TrimSpace(buf.String())
+			if line == "" {
+				t.Fatal("no output produced")
+			}
+
+			var entry map[string]any
+			if err := json.Unmarshal([]byte(line), &entry); err != nil {
+				t.Fatalf("output is not valid JSON: %v — got: %q", err, line)
+			}
+
+			if entry["level"] != tt.wantLevel {
+				t.Errorf("level = %v, want %v", entry["level"], tt.wantLevel)
+			}
+			if entry["msg"] != tt.wantMsg {
+				t.Errorf("msg = %v, want %v", entry["msg"], tt.wantMsg)
+			}
+			if entry["ts"] == "" || entry["ts"] == nil {
+				t.Error("ts field should be present")
+			}
+			if entry["file"] == "" || entry["file"] == nil {
+				t.Error("file field should be present")
+			}
+			if entry["line"] == nil {
+				t.Error("line field should be present")
 			}
 		})
 	}

@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+// generateError creates a standard error message for missing environment variables.
 func generateError(name string) string {
 	return fmt.Sprintf("required environment variable not found: %s", name)
 }
