@@ -20,10 +20,10 @@ func (a *App) RegisterHealthChecker(h HealthChecker) {
 
 // healthResponse is the response for the /health endpoint.
 type healthResponse struct {
-	Status   string            `json:"status"   doc:"Overall service status"  example:"UP"`
-	Service  string            `json:"service"  doc:"Service name"            example:"My API"`
-	Version  string            `json:"version"  doc:"Service version"         example:"1.0.0"`
-	Checks   map[string]string `json:"checks,omitempty" doc:"Per-dependency check results"`
+	Status  string            `json:"status"   doc:"Overall service status"  example:"UP"`
+	Service string            `json:"service"  doc:"Service name"            example:"My API"`
+	Version string            `json:"version"  doc:"Service version"         example:"1.0.0"`
+	Checks  map[string]string `json:"checks,omitempty" doc:"Per-dependency check results"`
 }
 
 // registerHealth adds the /health route to both Fiber and the OpenAPI spec.

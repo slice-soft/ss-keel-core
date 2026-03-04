@@ -18,13 +18,11 @@ func (a *App) Group(prefix string, middlewares ...fiber.Handler) *Group {
 // prepending the group middlewares before each route's own middlewares.
 func (g *Group) RegisterController(c Controller) {
 	for _, route := range c.Routes() {
-		prefixed := route
-		prefixed.path = g.prefix + route.path
-		prefixed.middlewares = append(g.middlewares, route.middlewares...)
+		prefixed := route.WithPathPrefix(g.prefix).PrependMiddlewares(g.middlewares...)
 		g.app.routes = append(g.app.routes, prefixed)
-		handlers := append(prefixed.middlewares, prefixed.handler)
-		g.app.fiber.Add(prefixed.method, prefixed.path, handlers...)
-		g.app.logger.Debug("Route registered: [%s] %s", prefixed.method, prefixed.path)
+		handlers := append(append([]fiber.Handler{}, prefixed.Middlewares()...), prefixed.Handler())
+		g.app.fiber.Add(prefixed.Method(), prefixed.Path(), handlers...)
+		g.app.logger.Debug("Route registered: [%s] %s", prefixed.Method(), prefixed.Path())
 	}
 }
 

@@ -479,13 +479,13 @@ func TestWithDeprecated(t *testing.T) {
 
 func TestWithQueryParam(t *testing.T) {
 	tests := []struct {
-		name        string
-		route       Route
-		wantLen     int
-		wantNames   []string
-		wantReq     []bool
-		wantTypes   []string
-		wantDescs   []string
+		name      string
+		route     Route
+		wantLen   int
+		wantNames []string
+		wantReq   []bool
+		wantTypes []string
+		wantDescs []string
 	}{
 		{
 			name:      "single optional param",

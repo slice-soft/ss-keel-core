@@ -1,7 +1,8 @@
-package core
+package httpx
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/slice-soft/ss-keel-core/core/contracts"
 	"github.com/slice-soft/ss-keel-core/validation"
 )
 
@@ -10,7 +11,7 @@ type Ctx struct {
 	*fiber.Ctx
 }
 
-// WrapHandler converts a Keel handler function into a Fiber handler.
+// WrapHandler converts a Keel-style handler into a Fiber handler.
 func WrapHandler(h func(*Ctx) error) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		return h(&Ctx{c})
@@ -27,6 +28,7 @@ func (c *Ctx) ParseBody(dst any) error {
 		})
 		return fiber.ErrBadRequest
 	}
+
 	if errs := validation.Validate(dst); len(errs) > 0 {
 		c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
 			"status_code": 422,
@@ -35,6 +37,7 @@ func (c *Ctx) ParseBody(dst any) error {
 		})
 		return fiber.ErrUnprocessableEntity
 	}
+
 	return nil
 }
 
@@ -48,12 +51,35 @@ func (c *Ctx) User() any {
 	return c.Locals("_keel_user")
 }
 
-// UserAs is a generic package-level function that extracts the authenticated
-// user stored in Fiber locals and type-asserts it to T.
-// Returns the zero value and false when no user is set or the type doesn't match.
+// UserAs extracts the authenticated user from Fiber locals and type-asserts it to T.
 func UserAs[T any](c *Ctx) (T, bool) {
 	v, ok := c.Locals("_keel_user").(T)
 	return v, ok
+}
+
+// Lang extracts the language from the Accept-Language header.
+// Returns "en" if the header is absent or empty.
+func (c *Ctx) Lang() string {
+	lang := c.Get("Accept-Language")
+	if lang == "" {
+		return "en"
+	}
+	for i := 0; i < len(lang); i++ {
+		if lang[i] == ',' || lang[i] == ';' {
+			return lang[:i]
+		}
+	}
+	return lang
+}
+
+// T translates a key using a translator stored in locals.
+// Returns the key unchanged if no translator is registered.
+func (c *Ctx) T(key string, args ...any) string {
+	t, ok := c.Locals("_keel_translator").(contracts.Translator)
+	if !ok || t == nil {
+		return key
+	}
+	return t.T(c.Lang(), key, args...)
 }
 
 // OK responds with HTTP 200 and a JSON body.
