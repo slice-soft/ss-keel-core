@@ -15,10 +15,6 @@ import (
 
 // Listen starts the HTTP server with graceful shutdown support.
 func (a *App) Listen() error {
-	if a.scheduler != nil {
-		a.scheduler.Start()
-	}
-
 	if err := a.resolveListenPort(); err != nil {
 		return err
 	}
@@ -26,6 +22,10 @@ func (a *App) Listen() error {
 	a.registerDocsRoutes()
 
 	a.printBanner()
+
+	if a.scheduler != nil {
+		a.scheduler.Start()
+	}
 
 	return a.serveWithGracefulShutdown()
 }

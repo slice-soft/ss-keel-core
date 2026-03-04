@@ -92,8 +92,8 @@ func TestListenReturnsErrorOnInvalidPort(t *testing.T) {
 	if err == nil {
 		t.Fatal("Listen() should return error for invalid port")
 	}
-	if !s.started {
-		t.Fatal("scheduler Start() should be called before listen failure")
+	if s.started {
+		t.Fatal("scheduler Start() should not be called when port validation fails")
 	}
 }
 
