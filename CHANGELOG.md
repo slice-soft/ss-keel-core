@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/slice-soft/ss-keel-core/compare/v0.2.0...v0.2.1) (2026-03-04)
+
+
+### Bug Fixes
+
+* core feature folders refactor ([#12](https://github.com/slice-soft/ss-keel-core/issues/12)) ([99583e6](https://github.com/slice-soft/ss-keel-core/commit/99583e6b94662fac2da8846dbad64ecbcc5e61ca))
+
 ## [0.2.0](https://github.com/slice-soft/ss-keel-core/compare/v0.1.0...v0.2.0) (2026-02-26)
 
 
