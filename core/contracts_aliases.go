@@ -29,4 +29,6 @@ type (
 
 	Span   = contracts.Span
 	Tracer = contracts.Tracer
+
+	Translator = contracts.Translator
 )
