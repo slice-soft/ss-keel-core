@@ -4,15 +4,17 @@ import (
 	"context"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/slice-soft/ss-keel-core/contracts"
+	"github.com/slice-soft/ss-keel-core/core/httpx"
 )
 
 // Use registers a module into the app.
-func (a *App) Use(m Module) {
+func (a *App) Use(m contracts.Module[*App]) {
 	m.Register(a)
 }
 
 // RegisterController registers all routes from a controller into the app.
-func (a *App) RegisterController(c Controller) {
+func (a *App) RegisterController(c contracts.Controller[httpx.Route]) {
 	for _, route := range c.Routes() {
 		a.routes = append(a.routes, route)
 		handlers := append(append([]fiber.Handler{}, route.Middlewares()...), route.Handler())
@@ -27,28 +29,28 @@ func (a *App) OnShutdown(fn func(context.Context) error) {
 }
 
 // SetMetricsCollector sets the metrics collector.
-func (a *App) SetMetricsCollector(mc MetricsCollector) {
+func (a *App) SetMetricsCollector(mc contracts.MetricsCollector) {
 	a.metricsCollector = mc
 }
 
 // SetTracer sets the tracer. If never called, a noop tracer is used.
-func (a *App) SetTracer(t Tracer) {
+func (a *App) SetTracer(t contracts.Tracer) {
 	a.tracer = t
 }
 
 // Tracer returns the configured tracer (never nil).
-func (a *App) Tracer() Tracer {
+func (a *App) Tracer() contracts.Tracer {
 	return a.tracer
 }
 
 // SetTranslator sets the i18n translator.
-func (a *App) SetTranslator(t Translator) {
+func (a *App) SetTranslator(t contracts.Translator) {
 	a.translator = t
 }
 
 // RegisterScheduler registers a scheduler that will be started in Listen()
 // and stopped on shutdown.
-func (a *App) RegisterScheduler(s Scheduler) {
+func (a *App) RegisterScheduler(s contracts.Scheduler) {
 	a.scheduler = s
 	a.OnShutdown(func(ctx context.Context) error {
 		s.Stop(ctx)

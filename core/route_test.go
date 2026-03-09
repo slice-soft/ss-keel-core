@@ -4,9 +4,10 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/slice-soft/ss-keel-core/core/httpx"
 )
 
-func dummyHandler(ctx *Ctx) error {
+func dummyHandler(ctx *httpx.Ctx) error {
 	return nil
 }
 func dummyMiddleware() fiber.Handler {
@@ -24,55 +25,55 @@ type testResponseDTO struct {
 func TestHTTPConstrcutors(t *testing.T) {
 	tests := []struct {
 		name       string
-		route      Route
+		route      httpx.Route
 		wantMethod string
 		wantPath   string
 	}{
 		{
 			name:       "GET constructor",
-			route:      GET("/users", dummyHandler),
+			route:      httpx.GET("/users", httpx.WrapHandler(dummyHandler)),
 			wantMethod: "GET",
 			wantPath:   "/users",
 		},
 		{
 			name:       "POST simple",
-			route:      POST("/users", dummyHandler),
+			route:      httpx.POST("/users", httpx.WrapHandler(dummyHandler)),
 			wantMethod: "POST",
 			wantPath:   "/users",
 		},
 		{
 			name:       "PUT simple",
-			route:      PUT("/users/:id", dummyHandler),
+			route:      httpx.PUT("/users/:id", httpx.WrapHandler(dummyHandler)),
 			wantMethod: "PUT",
 			wantPath:   "/users/:id",
 		},
 		{
 			name:       "PATCH simple",
-			route:      PATCH("/users/:id", dummyHandler),
+			route:      httpx.PATCH("/users/:id", httpx.WrapHandler(dummyHandler)),
 			wantMethod: "PATCH",
 			wantPath:   "/users/:id",
 		},
 		{
 			name:       "DELETE simple",
-			route:      DELETE("/users/:id", dummyHandler),
+			route:      httpx.DELETE("/users/:id", httpx.WrapHandler(dummyHandler)),
 			wantMethod: "DELETE",
 			wantPath:   "/users/:id",
 		},
 		{
 			name:       "path con param",
-			route:      GET("/users/:id", dummyHandler),
+			route:      httpx.GET("/users/:id", httpx.WrapHandler(dummyHandler)),
 			wantMethod: "GET",
 			wantPath:   "/users/:id",
 		},
 		{
 			name:       "path anidado",
-			route:      GET("/users/:id/posts", dummyHandler),
+			route:      httpx.GET("/users/:id/posts", httpx.WrapHandler(dummyHandler)),
 			wantMethod: "GET",
 			wantPath:   "/users/:id/posts",
 		},
 		{
 			name:       "path whith parameters",
-			route:      GET("/users/:id/books/:bookId", dummyHandler),
+			route:      httpx.GET("/users/:id/books/:bookId", httpx.WrapHandler(dummyHandler)),
 			wantMethod: "GET",
 			wantPath:   "/users/:id/books/:bookId",
 		},
@@ -95,31 +96,31 @@ func TestHTTPConstrcutors(t *testing.T) {
 func TestBody(t *testing.T) {
 	tests := []struct {
 		name     string
-		route    Route
+		route    httpx.Route
 		wantBody bool
 		wantType any
 	}{
 		{
 			name:     "whith body required",
-			route:    POST("/users", dummyHandler).WithBody(WithBody[testDTO]()),
+			route:    httpx.POST("/users", httpx.WrapHandler(dummyHandler)).WithBody(httpx.WithBody[testDTO]()),
 			wantBody: true,
 			wantType: testDTO{},
 		},
 		{
 			name:     "without body",
-			route:    GET("/users", dummyHandler),
+			route:    httpx.GET("/users", httpx.WrapHandler(dummyHandler)),
 			wantBody: false,
 		},
 		{
 			name: "body inline struct",
-			route: POST("/users", dummyHandler).WithBody(WithBody[struct {
+			route: httpx.POST("/users", httpx.WrapHandler(dummyHandler)).WithBody(httpx.WithBody[struct {
 				Email string `json:"email"`
 			}]()),
 			wantBody: true,
 		},
 		{
 			name: "body whith BodyMeta directly",
-			route: POST("/users", dummyHandler).WithBody(&BodyMeta{
+			route: httpx.POST("/users", httpx.WrapHandler(dummyHandler)).WithBody(&httpx.BodyMeta{
 				Type:     testDTO{},
 				Required: true,
 			}),
@@ -145,31 +146,31 @@ func TestBody(t *testing.T) {
 func TestResponse(t *testing.T) {
 	tests := []struct {
 		name           string
-		route          Route
+		route          httpx.Route
 		wantResponse   bool
 		wantStatusCode int
 	}{
 		{
 			name:           "response 200",
-			route:          GET("/users", dummyHandler).WithResponse(WithResponse[testResponseDTO](200)),
+			route:          httpx.GET("/users", httpx.WrapHandler(dummyHandler)).WithResponse(httpx.WithResponse[testResponseDTO](200)),
 			wantResponse:   true,
 			wantStatusCode: 200,
 		},
 		{
 			name:           "response 201",
-			route:          POST("/users", dummyHandler).WithResponse(WithResponse[testResponseDTO](201)),
+			route:          httpx.POST("/users", httpx.WrapHandler(dummyHandler)).WithResponse(httpx.WithResponse[testResponseDTO](201)),
 			wantResponse:   true,
 			wantStatusCode: 201,
 		},
 		{
 			name:           "response 204 without body",
-			route:          DELETE("/users/:id", dummyHandler).WithResponse(WithResponse[struct{}](204)),
+			route:          httpx.DELETE("/users/:id", httpx.WrapHandler(dummyHandler)).WithResponse(httpx.WithResponse[struct{}](204)),
 			wantResponse:   true,
 			wantStatusCode: 204,
 		},
 		{
 			name:         "without response",
-			route:        GET("/users", dummyHandler),
+			route:        httpx.GET("/users", httpx.WrapHandler(dummyHandler)),
 			wantResponse: false,
 		},
 	}
@@ -194,22 +195,22 @@ func TestResponse(t *testing.T) {
 func TestTags(t *testing.T) {
 	tests := []struct {
 		name     string
-		route    Route
+		route    httpx.Route
 		wantTags []string
 	}{
 		{
 			name:     "single tag",
-			route:    GET("/users", dummyHandler).Tag("users"),
+			route:    httpx.GET("/users", httpx.WrapHandler(dummyHandler)).Tag("users"),
 			wantTags: []string{"users"},
 		},
 		{
 			name:     "multiple tags with Tag()",
-			route:    GET("/users", dummyHandler).Tag("users").Tag("admin").Tag("backoffice"),
+			route:    httpx.GET("/users", httpx.WrapHandler(dummyHandler)).Tag("users").Tag("admin").Tag("backoffice"),
 			wantTags: []string{"users", "admin", "backoffice"},
 		},
 		{
 			name:     "without tags",
-			route:    GET("/users", dummyHandler),
+			route:    httpx.GET("/users", httpx.WrapHandler(dummyHandler)),
 			wantTags: nil,
 		},
 	}
@@ -233,24 +234,24 @@ func TestTags(t *testing.T) {
 func TestDescribe(t *testing.T) {
 	tests := []struct {
 		name            string
-		route           Route
+		route           httpx.Route
 		wantSummary     string
 		wantDescription string
 	}{
 		{
 			name:        "only summary",
-			route:       GET("/users", dummyHandler).Describe("List users"),
+			route:       httpx.GET("/users", httpx.WrapHandler(dummyHandler)).Describe("List users"),
 			wantSummary: "List users",
 		},
 		{
 			name:            "summary and description",
-			route:           GET("/users", dummyHandler).Describe("List users", "Returns all users"),
+			route:           httpx.GET("/users", httpx.WrapHandler(dummyHandler)).Describe("List users", "Returns all users"),
 			wantSummary:     "List users",
 			wantDescription: "Returns all users",
 		},
 		{
 			name:        "without describe",
-			route:       GET("/users", dummyHandler),
+			route:       httpx.GET("/users", httpx.WrapHandler(dummyHandler)),
 			wantSummary: "",
 		},
 	}
@@ -270,22 +271,22 @@ func TestDescribe(t *testing.T) {
 func TestSecured(t *testing.T) {
 	tests := []struct {
 		name        string
-		route       Route
+		route       httpx.Route
 		wantSecured []string
 	}{
 		{
 			name:        "a single scheme",
-			route:       GET("/users", dummyHandler).WithSecured("bearerAuth"),
+			route:       httpx.GET("/users", httpx.WrapHandler(dummyHandler)).WithSecured("bearerAuth"),
 			wantSecured: []string{"bearerAuth"},
 		},
 		{
 			name:        "multiple schemes",
-			route:       GET("/users", dummyHandler).WithSecured("bearerAuth", "apiKey"),
+			route:       httpx.GET("/users", httpx.WrapHandler(dummyHandler)).WithSecured("bearerAuth", "apiKey"),
 			wantSecured: []string{"bearerAuth", "apiKey"},
 		},
 		{
 			name:        "without secured",
-			route:       GET("/users", dummyHandler),
+			route:       httpx.GET("/users", httpx.WrapHandler(dummyHandler)),
 			wantSecured: nil,
 		},
 	}
@@ -309,22 +310,22 @@ func TestSecured(t *testing.T) {
 func TestMiddlewares(t *testing.T) {
 	tests := []struct {
 		name            string
-		route           Route
+		route           httpx.Route
 		wantMiddlewares int
 	}{
 		{
 			name:            "a single middleware",
-			route:           GET("/users", dummyHandler).Use(dummyMiddleware()),
+			route:           httpx.GET("/users", httpx.WrapHandler(dummyHandler)).Use(dummyMiddleware()),
 			wantMiddlewares: 1,
 		},
 		{
 			name:            "multiple middlewares",
-			route:           GET("/users", dummyHandler).Use(dummyMiddleware(), dummyMiddleware()),
+			route:           httpx.GET("/users", httpx.WrapHandler(dummyHandler)).Use(dummyMiddleware(), dummyMiddleware()),
 			wantMiddlewares: 2,
 		},
 		{
 			name:            "without middlewares",
-			route:           GET("/users", dummyHandler),
+			route:           httpx.GET("/users", httpx.WrapHandler(dummyHandler)),
 			wantMiddlewares: 0,
 		},
 	}
@@ -342,7 +343,7 @@ func TestMiddlewares(t *testing.T) {
 func TestBuilderCombinations(t *testing.T) {
 	tests := []struct {
 		name            string
-		route           Route
+		route           httpx.Route
 		wantMethod      string
 		wantPath        string
 		wantSummary     string
@@ -355,8 +356,8 @@ func TestBuilderCombinations(t *testing.T) {
 	}{
 		{
 			name: "complete GET route",
-			route: GET("/users/:id", dummyHandler).
-				WithResponse(WithResponse[testResponseDTO](200)).
+			route: httpx.GET("/users/:id", httpx.WrapHandler(dummyHandler)).
+				WithResponse(httpx.WithResponse[testResponseDTO](200)).
 				Tag("users").
 				Describe("Get user", "Returns a user by ID").
 				WithSecured("bearerAuth").
@@ -373,9 +374,9 @@ func TestBuilderCombinations(t *testing.T) {
 		},
 		{
 			name: "complete POST route",
-			route: POST("/users", dummyHandler).
-				WithBody(WithBody[testDTO]()).
-				WithResponse(WithResponse[testResponseDTO](201)).
+			route: httpx.POST("/users", httpx.WrapHandler(dummyHandler)).
+				WithBody(httpx.WithBody[testDTO]()).
+				WithResponse(httpx.WithResponse[testResponseDTO](201)).
 				Tag("users").
 				Tag("admin").
 				Describe("Create user").
@@ -393,9 +394,9 @@ func TestBuilderCombinations(t *testing.T) {
 		},
 		{
 			name: "inline function",
-			route: GET("/ping", func(ctx *Ctx) error {
+			route: httpx.GET("/ping", httpx.WrapHandler(func(ctx *httpx.Ctx) error {
 				return nil
-			}).Tag("health").Describe("Ping"),
+			})).Tag("health").Describe("Ping"),
 			wantMethod:  "GET",
 			wantPath:    "/ping",
 			wantSummary: "Ping",
@@ -403,7 +404,7 @@ func TestBuilderCombinations(t *testing.T) {
 		},
 		{
 			name: "complete chained builder with DELETE",
-			route: DELETE("/users/:id", dummyHandler).
+			route: httpx.DELETE("/users/:id", httpx.WrapHandler(dummyHandler)).
 				Use(dummyMiddleware(), dummyMiddleware()).
 				WithSecured("bearerAuth").
 				Tag("users").
@@ -464,13 +465,13 @@ func TestBuilderCombinations(t *testing.T) {
 
 func TestWithDeprecated(t *testing.T) {
 	t.Run("deprecated flag is set", func(t *testing.T) {
-		route := GET("/users", dummyHandler).WithDeprecated()
+		route := httpx.GET("/users", httpx.WrapHandler(dummyHandler)).WithDeprecated()
 		if !route.Deprecated() {
 			t.Error("Deprecated() should be true")
 		}
 	})
 	t.Run("not deprecated by default", func(t *testing.T) {
-		route := GET("/users", dummyHandler)
+		route := httpx.GET("/users", httpx.WrapHandler(dummyHandler))
 		if route.Deprecated() {
 			t.Error("Deprecated() should be false by default")
 		}
@@ -480,7 +481,7 @@ func TestWithDeprecated(t *testing.T) {
 func TestWithQueryParam(t *testing.T) {
 	tests := []struct {
 		name      string
-		route     Route
+		route     httpx.Route
 		wantLen   int
 		wantNames []string
 		wantReq   []bool
@@ -489,7 +490,7 @@ func TestWithQueryParam(t *testing.T) {
 	}{
 		{
 			name:      "single optional param",
-			route:     GET("/users", dummyHandler).WithQueryParam("status", "string", false),
+			route:     httpx.GET("/users", httpx.WrapHandler(dummyHandler)).WithQueryParam("status", "string", false),
 			wantLen:   1,
 			wantNames: []string{"status"},
 			wantReq:   []bool{false},
@@ -498,7 +499,7 @@ func TestWithQueryParam(t *testing.T) {
 		},
 		{
 			name: "required param with description",
-			route: GET("/search", dummyHandler).
+			route: httpx.GET("/search", httpx.WrapHandler(dummyHandler)).
 				WithQueryParam("q", "string", true, "Search query"),
 			wantLen:   1,
 			wantNames: []string{"q"},
@@ -508,7 +509,7 @@ func TestWithQueryParam(t *testing.T) {
 		},
 		{
 			name: "multiple params accumulate",
-			route: GET("/users", dummyHandler).
+			route: httpx.GET("/users", httpx.WrapHandler(dummyHandler)).
 				WithQueryParam("page", "integer", false, "Page number").
 				WithQueryParam("limit", "integer", false, "Page size").
 				WithQueryParam("sort", "string", false),
@@ -519,7 +520,7 @@ func TestWithQueryParam(t *testing.T) {
 		},
 		{
 			name:    "no query params",
-			route:   GET("/users", dummyHandler),
+			route:   httpx.GET("/users", httpx.WrapHandler(dummyHandler)),
 			wantLen: 0,
 		},
 	}

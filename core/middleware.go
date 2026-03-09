@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/slice-soft/ss-keel-core/contracts"
 )
 
 // keelLogger provides request logging and optional metrics collection for HTTP requests.
@@ -30,7 +31,7 @@ func (a *App) keelLogger() fiber.Handler {
 		}
 
 		if a.metricsCollector != nil {
-			a.metricsCollector.RecordRequest(RequestMetrics{
+			a.metricsCollector.RecordRequest(contracts.RequestMetrics{
 				Method:     method,
 				Path:       path,
 				StatusCode: status,

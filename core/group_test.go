@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/slice-soft/ss-keel-core/contracts"
+	"github.com/slice-soft/ss-keel-core/core/httpx"
 )
 
 func TestGroupPrefix(t *testing.T) {
@@ -45,9 +47,9 @@ func TestGroupPrefix(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			app := New(KConfig{DisableHealth: true})
 			g := app.Group(tt.prefix)
-			g.RegisterController(ControllerFunc(func() []Route {
-				return []Route{
-					GET(tt.routePath, func(c *Ctx) error { return c.OK(nil) }),
+			g.RegisterController(contracts.ControllerFunc[httpx.Route](func() []httpx.Route {
+				return []httpx.Route{
+					httpx.GET(tt.routePath, httpx.WrapHandler(func(c *httpx.Ctx) error { return c.OK(nil) })),
 				}
 			}))
 
@@ -75,9 +77,9 @@ func TestGroupMiddleware(t *testing.T) {
 		}
 
 		g := app.Group("/v1", groupMiddleware)
-		g.RegisterController(ControllerFunc(func() []Route {
-			return []Route{
-				GET("/ping", func(c *Ctx) error { return c.OK(nil) }),
+		g.RegisterController(contracts.ControllerFunc[httpx.Route](func() []httpx.Route {
+			return []httpx.Route{
+				httpx.GET("/ping", httpx.WrapHandler(func(c *httpx.Ctx) error { return c.OK(nil) })),
 			}
 		}))
 
@@ -105,9 +107,9 @@ func TestGroupMiddleware(t *testing.T) {
 		}
 
 		g := app.Group("/v1", groupMW)
-		g.RegisterController(ControllerFunc(func() []Route {
-			return []Route{
-				GET("/ping", func(c *Ctx) error { return c.OK(nil) }).Use(routeMW),
+		g.RegisterController(contracts.ControllerFunc[httpx.Route](func() []httpx.Route {
+			return []httpx.Route{
+				httpx.GET("/ping", httpx.WrapHandler(func(c *httpx.Ctx) error { return c.OK(nil) })).Use(routeMW),
 			}
 		}))
 
@@ -125,10 +127,10 @@ func TestGroupMiddleware(t *testing.T) {
 func TestGroupRoutesRegisteredInApp(t *testing.T) {
 	app := New(KConfig{DisableHealth: true})
 	g := app.Group("/api")
-	g.RegisterController(ControllerFunc(func() []Route {
-		return []Route{
-			GET("/users", dummyHandler),
-			POST("/users", dummyHandler),
+	g.RegisterController(contracts.ControllerFunc[httpx.Route](func() []httpx.Route {
+		return []httpx.Route{
+			httpx.GET("/users", httpx.WrapHandler(dummyHandler)),
+			httpx.POST("/users", httpx.WrapHandler(dummyHandler)),
 		}
 	}))
 

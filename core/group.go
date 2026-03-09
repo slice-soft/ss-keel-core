@@ -1,6 +1,10 @@
 package core
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
+	"github.com/slice-soft/ss-keel-core/contracts"
+	"github.com/slice-soft/ss-keel-core/core/httpx"
+)
 
 // Group is a set of routes sharing a common path prefix and middlewares.
 type Group struct {
@@ -16,7 +20,7 @@ func (a *App) Group(prefix string, middlewares ...fiber.Handler) *Group {
 
 // RegisterController registers a controller's routes under the group prefix,
 // prepending the group middlewares before each route's own middlewares.
-func (g *Group) RegisterController(c Controller) {
+func (g *Group) RegisterController(c contracts.Controller[httpx.Route]) {
 	for _, route := range c.Routes() {
 		prefixed := route.WithPathPrefix(g.prefix).PrependMiddlewares(g.middlewares...)
 		g.app.routes = append(g.app.routes, prefixed)
@@ -27,6 +31,6 @@ func (g *Group) RegisterController(c Controller) {
 }
 
 // Use registers a module under the group.
-func (g *Group) Use(m Module) {
+func (g *Group) Use(m contracts.Module[*App]) {
 	m.Register(g.app)
 }

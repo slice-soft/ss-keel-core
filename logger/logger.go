@@ -9,6 +9,8 @@ import (
 	"path"
 	"runtime"
 	"time"
+
+	"github.com/slice-soft/ss-keel-core/contracts"
 )
 
 // LogFormat defines the output format of the logger.
@@ -33,6 +35,8 @@ const (
 	errorLevel LogLevel = "ERROR"
 	debugLevel LogLevel = "DEBUG"
 )
+
+var _ contracts.Logger = (*Logger)(nil)
 
 // NewLogger creates a new Logger instance using text format.
 // In production, debug logs are disabled.

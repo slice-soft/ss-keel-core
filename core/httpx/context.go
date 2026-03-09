@@ -2,7 +2,7 @@ package httpx
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/slice-soft/ss-keel-core/core/contracts"
+	"github.com/slice-soft/ss-keel-core/contracts"
 	"github.com/slice-soft/ss-keel-core/validation"
 )
 

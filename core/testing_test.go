@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/slice-soft/ss-keel-core/contracts"
+	"github.com/slice-soft/ss-keel-core/core/httpx"
 )
 
 func TestNewTestApp(t *testing.T) {
@@ -26,21 +29,21 @@ func TestTestAppRequestHelpers(t *testing.T) {
 	}
 
 	app := NewTestApp()
-	app.RegisterController(ControllerFunc(func() []Route {
-		return []Route{
-			GET("/headers", func(c *Ctx) error {
+	app.RegisterController(contracts.ControllerFunc[httpx.Route](func() []httpx.Route {
+		return []httpx.Route{
+			httpx.GET("/headers", httpx.WrapHandler(func(c *httpx.Ctx) error {
 				if c.Get("X-Test") != "1" {
 					return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "missing header"})
 				}
 				return c.OK(map[string]string{"status": "ok"})
-			}),
-			POST("/echo", func(c *Ctx) error {
+			})),
+			httpx.POST("/echo", httpx.WrapHandler(func(c *httpx.Ctx) error {
 				var in bodyDTO
 				if err := c.ParseBody(&in); err != nil {
 					return err
 				}
 				return c.OK(in)
-			}),
+			})),
 		}
 	}))
 

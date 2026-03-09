@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/slice-soft/ss-keel-core/contracts"
+	"github.com/slice-soft/ss-keel-core/core/httpx"
 )
 
 // — SetUser / UserAs —
@@ -13,7 +16,7 @@ import (
 func TestSetUserAndUser(t *testing.T) {
 	type User struct{ ID string }
 
-	app := newTestApp("GET", "/test", func(c *Ctx) error {
+	app := newTestApp("GET", "/test", func(c *httpx.Ctx) error {
 		c.SetUser(User{ID: "42"})
 		u := c.User()
 		if u == nil {
@@ -39,9 +42,9 @@ func TestUserAs(t *testing.T) {
 	}
 
 	t.Run("correct type returns value and true", func(t *testing.T) {
-		app := newTestApp("GET", "/test", func(c *Ctx) error {
+		app := newTestApp("GET", "/test", func(c *httpx.Ctx) error {
 			c.SetUser(AuthUser{ID: "1", Role: "admin"})
-			u, ok := UserAs[AuthUser](c)
+			u, ok := httpx.UserAs[AuthUser](c)
 			if !ok {
 				return fmt.Errorf("UserAs returned false")
 			}
@@ -60,9 +63,9 @@ func TestUserAs(t *testing.T) {
 
 	t.Run("wrong type returns zero and false", func(t *testing.T) {
 		type OtherUser struct{ Email string }
-		app := newTestApp("GET", "/test", func(c *Ctx) error {
+		app := newTestApp("GET", "/test", func(c *httpx.Ctx) error {
 			c.SetUser(AuthUser{ID: "1", Role: "admin"})
-			_, ok := UserAs[OtherUser](c)
+			_, ok := httpx.UserAs[OtherUser](c)
 			if ok {
 				return fmt.Errorf("UserAs should return false for wrong type")
 			}
@@ -77,8 +80,8 @@ func TestUserAs(t *testing.T) {
 	})
 
 	t.Run("no user set returns false", func(t *testing.T) {
-		app := newTestApp("GET", "/test", func(c *Ctx) error {
-			_, ok := UserAs[AuthUser](c)
+		app := newTestApp("GET", "/test", func(c *httpx.Ctx) error {
+			_, ok := httpx.UserAs[AuthUser](c)
 			if ok {
 				return fmt.Errorf("UserAs should return false when no user is set")
 			}
@@ -137,7 +140,7 @@ func TestParsePagination(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var gotPage, gotLimit int
-			app := newTestApp("GET", "/test", func(c *Ctx) error {
+			app := newTestApp("GET", "/test", func(c *httpx.Ctx) error {
 				q := c.ParsePagination()
 				gotPage = q.Page
 				gotLimit = q.Limit
@@ -180,7 +183,7 @@ func TestLang(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var gotLang string
-			app := newTestApp("GET", "/test", func(c *Ctx) error {
+			app := newTestApp("GET", "/test", func(c *httpx.Ctx) error {
 				gotLang = c.Lang()
 				return c.OK(nil)
 			})
@@ -200,7 +203,7 @@ func TestLang(t *testing.T) {
 func TestCtxT(t *testing.T) {
 	t.Run("returns key as-is when no translator registered", func(t *testing.T) {
 		var result string
-		app := newTestApp("GET", "/test", func(c *Ctx) error {
+		app := newTestApp("GET", "/test", func(c *httpx.Ctx) error {
 			result = c.T("greeting.hello")
 			return c.OK(nil)
 		})
@@ -215,12 +218,12 @@ func TestCtxT(t *testing.T) {
 		var result string
 		keelApp := New(KConfig{DisableHealth: true})
 		keelApp.SetTranslator(&mockTranslator{})
-		keelApp.RegisterController(ControllerFunc(func() []Route {
-			return []Route{
-				GET("/test", func(c *Ctx) error {
+		keelApp.RegisterController(contracts.ControllerFunc[httpx.Route](func() []httpx.Route {
+			return []httpx.Route{
+				httpx.GET("/test", httpx.WrapHandler(func(c *httpx.Ctx) error {
 					result = c.T("hello")
 					return c.OK(nil)
-				}),
+				})),
 			}
 		}))
 
@@ -258,9 +261,9 @@ func TestMetricsCollector(t *testing.T) {
 		mc := &mockMetricsCollector{}
 		keelApp := New(KConfig{DisableHealth: true})
 		keelApp.SetMetricsCollector(mc)
-		keelApp.RegisterController(ControllerFunc(func() []Route {
-			return []Route{
-				GET("/ping", func(c *Ctx) error { return c.OK(nil) }),
+		keelApp.RegisterController(contracts.ControllerFunc[httpx.Route](func() []httpx.Route {
+			return []httpx.Route{
+				httpx.GET("/ping", httpx.WrapHandler(func(c *httpx.Ctx) error { return c.OK(nil) })),
 			}
 		}))
 
@@ -284,10 +287,10 @@ func TestMetricsCollector(t *testing.T) {
 
 type mockMetricsCollector struct {
 	calls       int
-	lastMetrics RequestMetrics
+	lastMetrics contracts.RequestMetrics
 }
 
-func (m *mockMetricsCollector) RecordRequest(metrics RequestMetrics) {
+func (m *mockMetricsCollector) RecordRequest(metrics contracts.RequestMetrics) {
 	m.calls++
 	m.lastMetrics = metrics
 }
@@ -324,7 +327,7 @@ func TestTracer(t *testing.T) {
 
 type mockTracer struct{ started int }
 
-func (m *mockTracer) Start(ctx context.Context, _ string) (context.Context, Span) {
+func (m *mockTracer) Start(ctx context.Context, _ string) (context.Context, contracts.Span) {
 	m.started++
 	return ctx, noopSpan{}
 }

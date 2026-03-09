@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
+
+	"github.com/slice-soft/ss-keel-core/core/httpx"
 )
 
 func TestToBuildInputMapsDocsConfig(t *testing.T) {
@@ -33,8 +35,8 @@ func TestToBuildInputMapsDocsConfig(t *testing.T) {
 		},
 	})
 
-	routes := []Route{
-		GET("/users/:id", func(c *Ctx) error { return c.NoContent() }).
+	routes := []httpx.Route{
+		httpx.GET("/users/:id", httpx.WrapHandler(func(c *httpx.Ctx) error { return c.NoContent() })).
 			Describe("Get user").
 			Tag("users"),
 	}
@@ -74,16 +76,16 @@ func TestToOpenAPIRoutesMapsRouteMetadata(t *testing.T) {
 		ID string `json:"id"`
 	}
 
-	route := POST("/users", func(c *Ctx) error { return c.NoContent() }).
-		WithBody(WithBody[requestDTO]()).
-		WithResponse(WithResponse[responseDTO](http.StatusCreated)).
+	route := httpx.POST("/users", httpx.WrapHandler(func(c *httpx.Ctx) error { return c.NoContent() })).
+		WithBody(httpx.WithBody[requestDTO]()).
+		WithResponse(httpx.WithResponse[responseDTO](http.StatusCreated)).
 		Describe("Create user", "Creates a new user").
 		Tag("users").
 		WithSecured("bearerAuth", "apiKey").
 		WithQueryParam("source", "string", false, "source system").
 		WithDeprecated()
 
-	out := toOpenAPIRoutes([]Route{route})
+	out := toOpenAPIRoutes([]httpx.Route{route})
 	if len(out) != 1 {
 		t.Fatalf("len(out) = %d, want 1", len(out))
 	}

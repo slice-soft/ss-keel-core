@@ -1,20 +1,14 @@
 package core
 
 import (
-	"context"
 	"sync"
+
+	"github.com/slice-soft/ss-keel-core/contracts"
+	"github.com/slice-soft/ss-keel-core/core/httpx"
 )
 
-// HealthChecker is the contract for external health check contributors.
-// Implement this interface and call App.RegisterHealthChecker() to include
-// a service (DB, Redis, etc.) in the /health response.
-type HealthChecker interface {
-	Name() string
-	Check(ctx context.Context) error
-}
-
 // RegisterHealthChecker adds a health checker to the app.
-func (a *App) RegisterHealthChecker(h HealthChecker) {
+func (a *App) RegisterHealthChecker(h contracts.HealthChecker) {
 	a.healthCheckers = append(a.healthCheckers, h)
 }
 
@@ -29,9 +23,9 @@ type healthResponse struct {
 // registerHealth adds the /health route to both Fiber and the OpenAPI spec.
 // It is called automatically in New() unless DisableHealth is set to true.
 func (a *App) registerHealth() {
-	a.RegisterController(ControllerFunc(func() []Route {
-		return []Route{
-			GET("/health", func(c *Ctx) error {
+	a.RegisterController(contracts.ControllerFunc[httpx.Route](func() []httpx.Route {
+		return []httpx.Route{
+			httpx.GET("/health", httpx.WrapHandler(func(c *httpx.Ctx) error {
 				status := "UP"
 				checks := make(map[string]string)
 
@@ -73,8 +67,8 @@ func (a *App) registerHealth() {
 					return c.Status(503).JSON(resp)
 				}
 				return c.OK(resp)
-			}).
-				WithResponse(WithResponse[healthResponse](200)).
+			})).
+				WithResponse(httpx.WithResponse[healthResponse](200)).
 				Tag("system").
 				Describe("Health check", "Returns the current status of the service"),
 		}

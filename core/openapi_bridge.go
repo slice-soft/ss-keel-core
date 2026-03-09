@@ -3,11 +3,12 @@ package core
 import (
 	"strings"
 
+	"github.com/slice-soft/ss-keel-core/core/httpx"
 	"github.com/slice-soft/ss-keel-core/openapi"
 )
 
 // toBuildInput maps App configuration and routes to the OpenAPI BuildInput structure.
-func toBuildInput(cfg KConfig, routes []Route) openapi.BuildInput {
+func toBuildInput(cfg KConfig, routes []httpx.Route) openapi.BuildInput {
 	bi := openapi.BuildInput{
 		Title:       cfg.Docs.Title,
 		Version:     cfg.Docs.Version,
@@ -42,7 +43,7 @@ func toBuildInput(cfg KConfig, routes []Route) openapi.BuildInput {
 }
 
 // toOpenAPIRoutes converts internal Route objects to OpenAPI RouteInput format.
-func toOpenAPIRoutes(routes []Route) []openapi.RouteInput {
+func toOpenAPIRoutes(routes []httpx.Route) []openapi.RouteInput {
 	var out []openapi.RouteInput
 	for _, r := range routes {
 		ri := openapi.RouteInput{
