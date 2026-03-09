@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/slice-soft/ss-keel-core/compare/v0.3.0...v0.3.1) (2026-03-09)
+
+
+### Bug Fixes
+
+* wrapper ([#19](https://github.com/slice-soft/ss-keel-core/issues/19)) ([22dc1e6](https://github.com/slice-soft/ss-keel-core/commit/22dc1e6bd07bf69255a535cd642dbbef63991130))
+
 ## [0.3.0](https://github.com/slice-soft/ss-keel-core/compare/v0.2.1...v0.3.0) (2026-03-09)
 
 
