@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/slice-soft/ss-keel-core/compare/v0.2.1...v0.3.0) (2026-03-09)
+
+
+### Features
+
+* add contract and delete alias ([#17](https://github.com/slice-soft/ss-keel-core/issues/17)) ([c485e6e](https://github.com/slice-soft/ss-keel-core/commit/c485e6ed872df4b9878a60fcd40b42f1b798684b))
+
 ## [0.2.1](https://github.com/slice-soft/ss-keel-core/compare/v0.2.0...v0.2.1) (2026-03-04)
 
 
