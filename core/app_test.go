@@ -138,16 +138,16 @@ func TestRegisterController(t *testing.T) {
 		{
 			name: "registers single route",
 			routes: []httpx.Route{
-				httpx.GET("/users", httpx.WrapHandler(dummyHandler)),
+				httpx.GET("/users", dummyHandler),
 			},
 			wantRoutes: 1,
 		},
 		{
 			name: "registers multiple routes",
 			routes: []httpx.Route{
-				httpx.GET("/users", httpx.WrapHandler(dummyHandler)),
-				httpx.POST("/users", httpx.WrapHandler(dummyHandler)),
-				httpx.DELETE("/users/:id", httpx.WrapHandler(dummyHandler)),
+				httpx.GET("/users", dummyHandler),
+				httpx.POST("/users", dummyHandler),
+				httpx.DELETE("/users/:id", dummyHandler),
 			},
 			wantRoutes: 3,
 		},
@@ -174,8 +174,8 @@ func TestUse(t *testing.T) {
 		{
 			name: "module registers its controller",
 			routes: []httpx.Route{
-				httpx.GET("/products", httpx.WrapHandler(dummyHandler)),
-				httpx.POST("/products", httpx.WrapHandler(dummyHandler)),
+				httpx.GET("/products", dummyHandler),
+				httpx.POST("/products", dummyHandler),
 			},
 			wantRoutes: 2,
 		},

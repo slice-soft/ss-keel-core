@@ -141,9 +141,9 @@ func TestKErrorHTTPHandler(t *testing.T) {
 			ke := tt.kerr
 			app.RegisterController(contracts.ControllerFunc[httpx.Route](func() []httpx.Route {
 				return []httpx.Route{
-					httpx.GET("/test", httpx.WrapHandler(func(c *httpx.Ctx) error {
+					httpx.GET("/test", func(c *httpx.Ctx) error {
 						return ke
-					})),
+					}),
 				}
 			}))
 

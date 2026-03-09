@@ -10,7 +10,7 @@ import (
 )
 
 func TestConstructors(t *testing.T) {
-	handler := func(c *fiber.Ctx) error { return c.SendStatus(http.StatusAccepted) }
+	handler := func(c *Ctx) error { return c.SendStatus(http.StatusAccepted) }
 	tests := []struct {
 		name   string
 		route  Route
@@ -47,7 +47,7 @@ func TestBuilderMetadata(t *testing.T) {
 		ID string `json:"id"`
 	}
 
-	route := POST("/users", func(c *fiber.Ctx) error { return c.SendStatus(http.StatusCreated) }).
+	route := POST("/users", func(c *Ctx) error { return c.SendStatus(http.StatusCreated) }).
 		WithBody(WithBody[req]()).
 		WithResponse(WithResponse[res](http.StatusCreated)).
 		Tag("users").
@@ -92,7 +92,7 @@ func TestMiddlewareOrderAndPathPrefix(t *testing.T) {
 		order = append(order, "route")
 		return c.Next()
 	}
-	handler := func(c *fiber.Ctx) error {
+	handler := func(c *Ctx) error {
 		order = append(order, "handler")
 		return c.SendStatus(http.StatusNoContent)
 	}
@@ -103,7 +103,7 @@ func TestMiddlewareOrderAndPathPrefix(t *testing.T) {
 		WithPathPrefix("/v1")
 
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
-	handlers := append(append([]fiber.Handler{}, route.Middlewares()...), route.Handler())
+	handlers := append(append([]fiber.Handler{}, route.Middlewares()...), WrapHandler(route.Handler()))
 	app.Add(route.Method(), route.Path(), handlers...)
 
 	resp, err := app.Test(httptest.NewRequest("GET", "/v1/ping", nil))

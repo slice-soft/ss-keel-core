@@ -24,7 +24,7 @@ func (g *Group) RegisterController(c contracts.Controller[httpx.Route]) {
 	for _, route := range c.Routes() {
 		prefixed := route.WithPathPrefix(g.prefix).PrependMiddlewares(g.middlewares...)
 		g.app.routes = append(g.app.routes, prefixed)
-		handlers := append(append([]fiber.Handler{}, prefixed.Middlewares()...), prefixed.Handler())
+		handlers := append(append([]fiber.Handler{}, prefixed.Middlewares()...), httpx.WrapHandler(prefixed.Handler()))
 		g.app.fiber.Add(prefixed.Method(), prefixed.Path(), handlers...)
 		g.app.logger.Debug("Route registered: [%s] %s", prefixed.Method(), prefixed.Path())
 	}

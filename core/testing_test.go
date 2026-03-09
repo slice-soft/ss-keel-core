@@ -31,19 +31,19 @@ func TestTestAppRequestHelpers(t *testing.T) {
 	app := NewTestApp()
 	app.RegisterController(contracts.ControllerFunc[httpx.Route](func() []httpx.Route {
 		return []httpx.Route{
-			httpx.GET("/headers", httpx.WrapHandler(func(c *httpx.Ctx) error {
+			httpx.GET("/headers", func(c *httpx.Ctx) error {
 				if c.Get("X-Test") != "1" {
 					return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "missing header"})
 				}
 				return c.OK(map[string]string{"status": "ok"})
-			})),
-			httpx.POST("/echo", httpx.WrapHandler(func(c *httpx.Ctx) error {
+			}),
+			httpx.POST("/echo", func(c *httpx.Ctx) error {
 				var in bodyDTO
 				if err := c.ParseBody(&in); err != nil {
 					return err
 				}
 				return c.OK(in)
-			})),
+			}),
 		}
 	}))
 

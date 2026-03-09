@@ -36,7 +36,7 @@ func TestToBuildInputMapsDocsConfig(t *testing.T) {
 	})
 
 	routes := []httpx.Route{
-		httpx.GET("/users/:id", httpx.WrapHandler(func(c *httpx.Ctx) error { return c.NoContent() })).
+		httpx.GET("/users/:id", func(c *httpx.Ctx) error { return c.NoContent() }).
 			Describe("Get user").
 			Tag("users"),
 	}
@@ -76,7 +76,7 @@ func TestToOpenAPIRoutesMapsRouteMetadata(t *testing.T) {
 		ID string `json:"id"`
 	}
 
-	route := httpx.POST("/users", httpx.WrapHandler(func(c *httpx.Ctx) error { return c.NoContent() })).
+	route := httpx.POST("/users", func(c *httpx.Ctx) error { return c.NoContent() }).
 		WithBody(httpx.WithBody[requestDTO]()).
 		WithResponse(httpx.WithResponse[responseDTO](http.StatusCreated)).
 		Describe("Create user", "Creates a new user").

@@ -17,7 +17,7 @@ func (a *App) Use(m contracts.Module[*App]) {
 func (a *App) RegisterController(c contracts.Controller[httpx.Route]) {
 	for _, route := range c.Routes() {
 		a.routes = append(a.routes, route)
-		handlers := append(append([]fiber.Handler{}, route.Middlewares()...), route.Handler())
+		handlers := append(append([]fiber.Handler{}, route.Middlewares()...), httpx.WrapHandler(route.Handler()))
 		a.fiber.Add(route.Method(), route.Path(), handlers...)
 		a.logger.Debug("Route registered: [%s] %s", route.Method(), route.Path())
 	}
