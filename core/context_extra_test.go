@@ -220,10 +220,10 @@ func TestCtxT(t *testing.T) {
 		keelApp.SetTranslator(&mockTranslator{})
 		keelApp.RegisterController(contracts.ControllerFunc[httpx.Route](func() []httpx.Route {
 			return []httpx.Route{
-				httpx.GET("/test", httpx.WrapHandler(func(c *httpx.Ctx) error {
+				httpx.GET("/test", func(c *httpx.Ctx) error {
 					result = c.T("hello")
 					return c.OK(nil)
-				})),
+				}),
 			}
 		}))
 
@@ -263,7 +263,7 @@ func TestMetricsCollector(t *testing.T) {
 		keelApp.SetMetricsCollector(mc)
 		keelApp.RegisterController(contracts.ControllerFunc[httpx.Route](func() []httpx.Route {
 			return []httpx.Route{
-				httpx.GET("/ping", httpx.WrapHandler(func(c *httpx.Ctx) error { return c.OK(nil) })),
+				httpx.GET("/ping", func(c *httpx.Ctx) error { return c.OK(nil) }),
 			}
 		}))
 
