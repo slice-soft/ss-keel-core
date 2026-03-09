@@ -7,23 +7,25 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/slice-soft/ss-keel-core/contracts"
+	"github.com/slice-soft/ss-keel-core/core/httpx"
 )
 
-// testModule is a minimal Module implementation for testing.
+// testModule is a minimal contracts.Module implementation for testing.
 type testModule struct {
-	controller Controller
+	controller contracts.Controller[httpx.Route]
 }
 
 func (m *testModule) Register(app *App) {
 	app.RegisterController(m.controller)
 }
 
-// testController is a minimal Controller implementation for testing.
+// testController is a minimal contracts.Controller implementation for testing.
 type testController struct {
-	routes []Route
+	routes []httpx.Route
 }
 
-func (c *testController) Routes() []Route {
+func (c *testController) Routes() []httpx.Route {
 	return c.routes
 }
 
@@ -130,22 +132,22 @@ func TestHealthEndpoint(t *testing.T) {
 func TestRegisterController(t *testing.T) {
 	tests := []struct {
 		name       string
-		routes     []Route
+		routes     []httpx.Route
 		wantRoutes int
 	}{
 		{
 			name: "registers single route",
-			routes: []Route{
-				GET("/users", dummyHandler),
+			routes: []httpx.Route{
+				httpx.GET("/users", httpx.WrapHandler(dummyHandler)),
 			},
 			wantRoutes: 1,
 		},
 		{
 			name: "registers multiple routes",
-			routes: []Route{
-				GET("/users", dummyHandler),
-				POST("/users", dummyHandler),
-				DELETE("/users/:id", dummyHandler),
+			routes: []httpx.Route{
+				httpx.GET("/users", httpx.WrapHandler(dummyHandler)),
+				httpx.POST("/users", httpx.WrapHandler(dummyHandler)),
+				httpx.DELETE("/users/:id", httpx.WrapHandler(dummyHandler)),
 			},
 			wantRoutes: 3,
 		},
@@ -166,14 +168,14 @@ func TestRegisterController(t *testing.T) {
 func TestUse(t *testing.T) {
 	tests := []struct {
 		name       string
-		routes     []Route
+		routes     []httpx.Route
 		wantRoutes int
 	}{
 		{
 			name: "module registers its controller",
-			routes: []Route{
-				GET("/products", dummyHandler),
-				POST("/products", dummyHandler),
+			routes: []httpx.Route{
+				httpx.GET("/products", httpx.WrapHandler(dummyHandler)),
+				httpx.POST("/products", httpx.WrapHandler(dummyHandler)),
 			},
 			wantRoutes: 2,
 		},

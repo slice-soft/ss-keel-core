@@ -3,6 +3,9 @@ package core
 import (
 	"context"
 	"testing"
+
+	"github.com/slice-soft/ss-keel-core/contracts"
+	"github.com/slice-soft/ss-keel-core/core/httpx"
 )
 
 type schedulerSpy struct {
@@ -10,9 +13,9 @@ type schedulerSpy struct {
 	stopped bool
 }
 
-func (s *schedulerSpy) Add(_ Job) error        { return nil }
-func (s *schedulerSpy) Start()                 { s.started = true }
-func (s *schedulerSpy) Stop(_ context.Context) { s.stopped = true }
+func (s *schedulerSpy) Add(_ contracts.Job) error { return nil }
+func (s *schedulerSpy) Start()                    { s.started = true }
+func (s *schedulerSpy) Stop(_ context.Context)    { s.stopped = true }
 
 type moduleSpy struct {
 	registered bool
@@ -61,7 +64,7 @@ func TestGroupUseCallsModuleRegister(t *testing.T) {
 }
 
 func TestNewPageAlias(t *testing.T) {
-	p := NewPage([]int{1, 2}, 5, 1, 2)
+	p := httpx.NewPage([]int{1, 2}, 5, 1, 2)
 	if p.Total != 5 || p.TotalPages != 3 {
 		t.Fatalf("unexpected page: %+v", p)
 	}

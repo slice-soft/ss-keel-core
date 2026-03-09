@@ -1,11 +1,15 @@
 package core
 
-import "context"
+import (
+	"context"
+
+	"github.com/slice-soft/ss-keel-core/contracts"
+)
 
 // noopTracer is the default tracer — performs no operations.
 type noopTracer struct{}
 
-func (noopTracer) Start(ctx context.Context, _ string) (context.Context, Span) {
+func (noopTracer) Start(ctx context.Context, _ string) (context.Context, contracts.Span) {
 	return ctx, noopSpan{}
 }
 

@@ -8,14 +8,15 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/slice-soft/ss-keel-core/core/httpx"
 )
 
 // newTestApp creates a minimal Fiber app for testing Ctx methods.
-func newTestApp(method, path string, handler func(*Ctx) error) *fiber.App {
+func newTestApp(method, path string, handler func(*httpx.Ctx) error) *fiber.App {
 	app := fiber.New(fiber.Config{
 		DisableStartupMessage: true,
 	})
-	app.Add(method, path, WrapHandler(handler))
+	app.Add(method, path, httpx.WrapHandler(handler))
 	return app
 }
 
@@ -39,7 +40,7 @@ func TestOK(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app := newTestApp("GET", "/test", func(ctx *Ctx) error {
+			app := newTestApp("GET", "/test", func(ctx *httpx.Ctx) error {
 				return ctx.OK(tt.data)
 			})
 
@@ -70,7 +71,7 @@ func TestCreated(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app := newTestApp("POST", "/test", func(ctx *Ctx) error {
+			app := newTestApp("POST", "/test", func(ctx *httpx.Ctx) error {
 				return ctx.Created(tt.data)
 			})
 
@@ -99,7 +100,7 @@ func TestNoContent(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app := newTestApp("DELETE", "/test", func(ctx *Ctx) error {
+			app := newTestApp("DELETE", "/test", func(ctx *httpx.Ctx) error {
 				return ctx.NoContent()
 			})
 
@@ -138,7 +139,7 @@ func TestNotFound(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app := newTestApp("GET", "/test", func(ctx *Ctx) error {
+			app := newTestApp("GET", "/test", func(ctx *httpx.Ctx) error {
 				return ctx.NotFound(tt.message...)
 			})
 
@@ -202,7 +203,7 @@ func TestParseBody(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app := newTestApp("POST", "/test", func(ctx *Ctx) error {
+			app := newTestApp("POST", "/test", func(ctx *httpx.Ctx) error {
 				var dto testDTO
 				if err := ctx.ParseBody(&dto); err != nil {
 					return err

@@ -60,44 +60,17 @@ func (s *schedulerMock) Add(_ Job) error        { return nil }
 func (s *schedulerMock) Start()                 { s.started = true }
 func (s *schedulerMock) Stop(_ context.Context) { s.stopped = true }
 
-type metricsMock struct {
-	last RequestMetrics
-}
-
-func (m *metricsMock) RecordRequest(r RequestMetrics) { m.last = r }
-
-type spanMock struct{}
-
-func (spanMock) SetAttribute(_ string, _ any) {}
-func (spanMock) RecordError(_ error)          {}
-func (spanMock) End()                         {}
-
-type tracerMock struct{}
-
-func (tracerMock) Start(ctx context.Context, _ string) (context.Context, Span) {
-	return ctx, spanMock{}
-}
-
-type translatorMock struct{}
-
-func (translatorMock) T(_, key string, _ ...any) string { return key + ".translated" }
-func (translatorMock) Locales() []string                { return []string{"en", "es"} }
-
 var (
-	_ Guard            = guardMock{}
-	_ Cache            = cacheMock{}
-	_ Storage          = storageMock{}
-	_ Mailer           = mailerMock{}
-	_ Publisher        = publisherMock{}
-	_ Subscriber       = subscriberMock{}
-	_ Scheduler        = (*schedulerMock)(nil)
-	_ MetricsCollector = (*metricsMock)(nil)
-	_ Tracer           = tracerMock{}
-	_ Span             = spanMock{}
-	_ Translator       = translatorMock{}
+	_ Guard      = guardMock{}
+	_ Cache      = cacheMock{}
+	_ Storage    = storageMock{}
+	_ Mailer     = mailerMock{}
+	_ Publisher  = publisherMock{}
+	_ Subscriber = subscriberMock{}
+	_ Scheduler  = (*schedulerMock)(nil)
 )
 
-func TestContractDataStructures(t *testing.T) {
+func TestServiceContractDataStructures(t *testing.T) {
 	att := MailAttachment{Filename: "f.txt", ContentType: "text/plain", Data: []byte("x")}
 	mail := Mail{
 		From:        "a@example.com",
@@ -124,14 +97,9 @@ func TestContractDataStructures(t *testing.T) {
 	if job.Name == "" || job.Handler == nil {
 		t.Fatalf("unexpected Job value: %+v", job)
 	}
-
-	rm := RequestMetrics{Method: "GET", Path: "/health", StatusCode: 200, Duration: time.Millisecond}
-	if rm.Method != "GET" || rm.StatusCode != 200 {
-		t.Fatalf("unexpected RequestMetrics value: %+v", rm)
-	}
 }
 
-func TestContractMocksAreCallable(t *testing.T) {
+func TestServiceContractMocksAreCallable(t *testing.T) {
 	ctx := context.Background()
 
 	if _, err := (storageMock{}).Get(ctx, "k"); err != nil {
@@ -146,21 +114,5 @@ func TestContractMocksAreCallable(t *testing.T) {
 	sm.Stop(ctx)
 	if !sm.started || !sm.stopped {
 		t.Fatalf("scheduler flags = started:%v stopped:%v", sm.started, sm.stopped)
-	}
-
-	mm := &metricsMock{}
-	mm.RecordRequest(RequestMetrics{Method: "POST"})
-	if mm.last.Method != "POST" {
-		t.Fatalf("metrics collector did not record request: %+v", mm.last)
-	}
-
-	_, span := (tracerMock{}).Start(ctx, "op")
-	span.SetAttribute("k", "v")
-	span.RecordError(nil)
-	span.End()
-
-	translated := (translatorMock{}).T("en", "key")
-	if translated != "key.translated" {
-		t.Fatalf("translator output = %q, want %q", translated, "key.translated")
 	}
 }

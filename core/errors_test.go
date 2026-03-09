@@ -5,6 +5,9 @@ import (
 	"errors"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/slice-soft/ss-keel-core/contracts"
+	"github.com/slice-soft/ss-keel-core/core/httpx"
 )
 
 func TestKErrorConstructors(t *testing.T) {
@@ -136,11 +139,11 @@ func TestKErrorHTTPHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			app := New(KConfig{DisableHealth: true})
 			ke := tt.kerr
-			app.RegisterController(ControllerFunc(func() []Route {
-				return []Route{
-					GET("/test", func(c *Ctx) error {
+			app.RegisterController(contracts.ControllerFunc[httpx.Route](func() []httpx.Route {
+				return []httpx.Route{
+					httpx.GET("/test", httpx.WrapHandler(func(c *httpx.Ctx) error {
 						return ke
-					}),
+					})),
 				}
 			}))
 
