@@ -25,7 +25,7 @@ type healthResponse struct {
 func (a *App) registerHealth() {
 	a.RegisterController(contracts.ControllerFunc[httpx.Route](func() []httpx.Route {
 		return []httpx.Route{
-			httpx.GET("/health", httpx.WrapHandler(func(c *httpx.Ctx) error {
+			httpx.GET("/health", func(c *httpx.Ctx) error {
 				status := "UP"
 				checks := make(map[string]string)
 
@@ -67,7 +67,7 @@ func (a *App) registerHealth() {
 					return c.Status(503).JSON(resp)
 				}
 				return c.OK(resp)
-			})).
+			}).
 				WithResponse(httpx.WithResponse[healthResponse](200)).
 				Tag("system").
 				Describe("Health check", "Returns the current status of the service"),

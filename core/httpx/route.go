@@ -14,7 +14,7 @@ type QueryParamMeta struct {
 type Route struct {
 	method      string
 	path        string
-	handler     fiber.Handler
+	handler     func(*Ctx) error
 	middlewares []fiber.Handler
 
 	summary     string
@@ -45,8 +45,8 @@ func (r Route) Method() string { return r.method }
 // Path returns the route path pattern.
 func (r Route) Path() string { return r.path }
 
-// Handler returns the Fiber handler function.
-func (r Route) Handler() fiber.Handler { return r.handler }
+// Handler returns the route handler function.
+func (r Route) Handler() func(*Ctx) error { return r.handler }
 
 // Middlewares returns the middleware handlers.
 func (r Route) Middlewares() []fiber.Handler { return r.middlewares }
@@ -154,7 +154,7 @@ func (r Route) WithQueryParam(name, typ string, required bool, desc ...string) R
 	return r
 }
 
-func newRoute(method, path string, handler fiber.Handler) Route {
+func newRoute(method, path string, handler func(*Ctx) error) Route {
 	return Route{
 		method:  method,
 		path:    path,
@@ -163,26 +163,26 @@ func newRoute(method, path string, handler fiber.Handler) Route {
 }
 
 // GET creates a GET route.
-func GET(path string, handler fiber.Handler) Route {
+func GET(path string, handler func(*Ctx) error) Route {
 	return newRoute("GET", path, handler)
 }
 
 // POST creates a POST route.
-func POST(path string, handler fiber.Handler) Route {
+func POST(path string, handler func(*Ctx) error) Route {
 	return newRoute("POST", path, handler)
 }
 
 // PUT creates a PUT route.
-func PUT(path string, handler fiber.Handler) Route {
+func PUT(path string, handler func(*Ctx) error) Route {
 	return newRoute("PUT", path, handler)
 }
 
 // PATCH creates a PATCH route.
-func PATCH(path string, handler fiber.Handler) Route {
+func PATCH(path string, handler func(*Ctx) error) Route {
 	return newRoute("PATCH", path, handler)
 }
 
 // DELETE creates a DELETE route.
-func DELETE(path string, handler fiber.Handler) Route {
+func DELETE(path string, handler func(*Ctx) error) Route {
 	return newRoute("DELETE", path, handler)
 }
