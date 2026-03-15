@@ -10,5 +10,6 @@ type Repository[T any, ID any, Q any, P any] interface {
 	FindAll(ctx context.Context, q Q) (P, error)
 	Create(ctx context.Context, entity *T) error
 	Update(ctx context.Context, id ID, entity *T) error
+	Patch(ctx context.Context, id ID, patch *T) error
 	Delete(ctx context.Context, id ID) error
 }
