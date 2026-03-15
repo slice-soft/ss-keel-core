@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/slice-soft/ss-keel-core/compare/v0.3.1...v0.4.0) (2026-03-15)
+
+
+### Features
+
+* add TokenSigner interface for JWT signing in auth contract ([#21](https://github.com/slice-soft/ss-keel-core/issues/21)) ([0724a9c](https://github.com/slice-soft/ss-keel-core/commit/0724a9ce04da13d25a1c6e782bf5ffc9ef132bb9))
+
 ## [0.3.1](https://github.com/slice-soft/ss-keel-core/compare/v0.3.0...v0.3.1) (2026-03-09)
 
 
