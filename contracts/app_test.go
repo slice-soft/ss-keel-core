@@ -66,6 +66,10 @@ func (repositoryMock) Update(_ context.Context, _ string, _ *entityMock) error {
 	return nil
 }
 
+func (repositoryMock) Patch(_ context.Context, _ string, _ *entityMock) error {
+	return nil
+}
+
 func (repositoryMock) Delete(_ context.Context, _ string) error {
 	return nil
 }
