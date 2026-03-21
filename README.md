@@ -6,6 +6,7 @@ Keel is a Go framework for building REST APIs with modular
 architecture, automatic OpenAPI, and built-in validation.
 
 [![CI](https://github.com/slice-soft/ss-keel-core/actions/workflows/ci.yml/badge.svg)](https://github.com/slice-soft/ss-keel-core/actions)
+[![Release](https://img.shields.io/github/v/release/slice-soft/ss-keel-core)](https://github.com/slice-soft/ss-keel-core/releases)
 ![Go](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go&logoColor=white)
 [![Go Report Card](https://goreportcard.com/badge/github.com/slice-soft/ss-keel-core)](https://goreportcard.com/report/github.com/slice-soft/ss-keel-core)
 [![Go Reference](https://pkg.go.dev/badge/github.com/slice-soft/ss-keel-core.svg)](https://pkg.go.dev/github.com/slice-soft/ss-keel-core)
@@ -25,8 +26,41 @@ Go is excellent at giving you the tools to build anything. Keel is opinionated a
 **Idiomatic Go** — builder pattern, interfaces, standard library where possible. No compromises on how Go should feel.
 
 ## Getting Started
-```go
+
+```bash
+keel new my-app
+cd my-app && go run ./cmd/
+```
+
+Or install manually:
+
+```bash
 go get github.com/slice-soft/ss-keel-core
+```
+
+A minimal Keel application:
+
+```go
+package main
+
+import (
+    "github.com/slice-soft/ss-keel-core/core"
+    "github.com/slice-soft/ss-keel-core/httpx"
+    "github.com/slice-soft/ss-keel-core/logger"
+)
+
+func main() {
+    app := core.New(core.Config{Name: "my-app", Port: 7331})
+    appLogger := logger.New(app.Config())
+
+    app.RegisterController(httpx.NewController("/api").
+        Add(httpx.GET("/hello", func(c *httpx.Ctx) error {
+            return c.OK(map[string]string{"message": "hello, keel"})
+        })),
+    )
+
+    app.Start(appLogger)
+}
 ```
 
 Check out the documentation at [keel-go.dev](https://keel-go.dev) for guides and API reference.
