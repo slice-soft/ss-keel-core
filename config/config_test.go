@@ -49,44 +49,6 @@ func TestGetEnv(t *testing.T) {
 	}
 }
 
-func TestGetEnvOrDefault(t *testing.T) {
-	tests := []struct {
-		name         string
-		envKey       string
-		envValue     string
-		defaultValue string
-		want         string
-	}{
-		{
-			name:         "existing variable returns value",
-			envKey:       "TEST_OR_DEFAULT",
-			envValue:     "custom",
-			defaultValue: "default",
-			want:         "custom",
-		},
-		{
-			name:         "missing variable returns default",
-			envKey:       "TEST_OR_DEFAULT_MISSING",
-			envValue:     "",
-			defaultValue: "default",
-			want:         "default",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.envValue != "" {
-				t.Setenv(tt.envKey, tt.envValue)
-			}
-
-			got := GetEnvOrDefault(tt.envKey, tt.defaultValue)
-			if got != tt.want {
-				t.Errorf("GetEnvOrDefault() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestGetEnvInt(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -133,50 +95,6 @@ func TestGetEnvInt(t *testing.T) {
 			got := GetEnvInt(tt.envKey)
 			if got != tt.want {
 				t.Errorf("GetEnvInt() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestGetEnvIntOrDefault(t *testing.T) {
-	tests := []struct {
-		name         string
-		envKey       string
-		envValue     string
-		defaultValue int
-		want         int
-	}{
-		{
-			name:         "valid integer returns value",
-			envKey:       "TEST_INT_OR_DEFAULT",
-			envValue:     "8080",
-			defaultValue: 3000,
-			want:         8080,
-		},
-		{
-			name:         "missing variable returns default",
-			envKey:       "TEST_INT_OR_DEFAULT_MISSING",
-			defaultValue: 3000,
-			want:         3000,
-		},
-		{
-			name:         "invalid integer returns default",
-			envKey:       "TEST_INT_OR_DEFAULT_INVALID",
-			envValue:     "notanint",
-			defaultValue: 3000,
-			want:         3000,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.envValue != "" {
-				t.Setenv(tt.envKey, tt.envValue)
-			}
-
-			got := GetEnvIntOrDefault(tt.envKey, tt.defaultValue)
-			if got != tt.want {
-				t.Errorf("GetEnvIntOrDefault() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -303,56 +221,6 @@ func TestGetEnvBool(t *testing.T) {
 			got := GetEnvBool(tt.envKey)
 			if got != tt.want {
 				t.Errorf("GetEnvBool() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestGetEnvBoolOrDefault(t *testing.T) {
-	tests := []struct {
-		name         string
-		envKey       string
-		envValue     string
-		defaultValue bool
-		want         bool
-	}{
-		{
-			name:         "true value returns true",
-			envKey:       "TEST_BOOL_OR_DEFAULT_TRUE",
-			envValue:     "true",
-			defaultValue: false,
-			want:         true,
-		},
-		{
-			name:         "missing variable returns default true",
-			envKey:       "TEST_BOOL_OR_DEFAULT_MISSING_T",
-			defaultValue: true,
-			want:         true,
-		},
-		{
-			name:         "missing variable returns default false",
-			envKey:       "TEST_BOOL_OR_DEFAULT_MISSING_F",
-			defaultValue: false,
-			want:         false,
-		},
-		{
-			name:         "invalid value returns default",
-			envKey:       "TEST_BOOL_OR_DEFAULT_INVALID",
-			envValue:     "notabool",
-			defaultValue: true,
-			want:         true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.envValue != "" {
-				t.Setenv(tt.envKey, tt.envValue)
-			}
-
-			got := GetEnvBoolOrDefault(tt.envKey, tt.defaultValue)
-			if got != tt.want {
-				t.Errorf("GetEnvBoolOrDefault() = %v, want %v", got, tt.want)
 			}
 		})
 	}

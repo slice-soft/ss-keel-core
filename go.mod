@@ -3,6 +3,7 @@ module github.com/slice-soft/ss-keel-core
 go 1.25
 
 require (
+	github.com/BurntSushi/toml v1.6.0
 	github.com/go-playground/validator/v10 v10.16.0
 	github.com/gofiber/fiber/v2 v2.52.0
 )
