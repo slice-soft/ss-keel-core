@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/slice-soft/ss-keel-core/compare/v0.10.0...v0.11.0) (2026-03-25)
+
+
+### Features
+
+* add environment variable helpers and application properties loading functionality ([#35](https://github.com/slice-soft/ss-keel-core/issues/35)) ([3508b4e](https://github.com/slice-soft/ss-keel-core/commit/3508b4e56e4d150c3e8f367b037c23f800659bb2))
+
 ## [0.10.0](https://github.com/slice-soft/ss-keel-core/compare/v0.9.0...v0.10.0) (2026-03-25)
 
 
