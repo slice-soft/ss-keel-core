@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/slice-soft/ss-keel-core/compare/v0.9.0...v0.10.0) (2026-03-25)
+
+
+### Features
+
+* refactor debuggable interface and add PanelComponent for improved rendering ([#33](https://github.com/slice-soft/ss-keel-core/issues/33)) ([fd1dee5](https://github.com/slice-soft/ss-keel-core/commit/fd1dee534878d3dc639df8b1df39167f485ea6f3))
+
 ## [0.9.0](https://github.com/slice-soft/ss-keel-core/compare/v0.8.0...v0.9.0) (2026-03-25)
 
 
