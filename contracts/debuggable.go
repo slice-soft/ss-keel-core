@@ -7,6 +7,12 @@ import (
 )
 
 // PanelEvent is a single event emitted by a Debuggable addon.
+//
+// Category is a free-form string defined by each addon (e.g. "query", "auth",
+// "cache"). The devpanel uses it to select a renderer; unknown values fall back
+// to the generic key/value view. Addons should define their own Category
+// constant locally — this package imposes no restrictions on the value.
+//
 // Level is one of "info", "warn", or "error".
 // Detail must never contain sensitive data (passwords, tokens, secrets).
 type PanelEvent struct {

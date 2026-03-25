@@ -72,7 +72,7 @@ func TestPanelEventFields(t *testing.T) {
 	e := PanelEvent{
 		Timestamp: now,
 		AddonID:   "gorm",
-		Category:  CategoryQuery,
+		Category:  "query", // each addon defines its own category string
 		Label:     "SELECT",
 		Detail:    map[string]any{"rows": 10},
 		Level:     "info",
@@ -80,8 +80,8 @@ func TestPanelEventFields(t *testing.T) {
 	if e.AddonID != "gorm" {
 		t.Fatalf("AddonID = %q, want %q", e.AddonID, "gorm")
 	}
-	if e.Category != CategoryQuery {
-		t.Fatalf("Category = %q, want %q", e.Category, CategoryQuery)
+	if e.Category != "query" {
+		t.Fatalf("Category = %q, want %q", e.Category, "query")
 	}
 	if e.Label != "SELECT" {
 		t.Fatalf("Label = %q, want %q", e.Label, "SELECT")
@@ -97,20 +97,6 @@ func TestPanelEventFields(t *testing.T) {
 	}
 }
 
-func TestPanelCategories(t *testing.T) {
-	cases := []struct{ got, want string }{
-		{CategoryQuery, "query"},
-		{CategoryAuth, "auth"},
-		{CategoryCache, "cache"},
-		{CategoryRequest, "request"},
-		{CategoryGeneric, "generic"},
-	}
-	for _, c := range cases {
-		if c.got != c.want {
-			t.Fatalf("category = %q, want %q", c.got, c.want)
-		}
-	}
-}
 
 func TestDebuggableContract(t *testing.T) {
 	ch := make(chan PanelEvent, 1)
