@@ -225,3 +225,47 @@ func TestGetEnvBool(t *testing.T) {
 		})
 	}
 }
+
+func TestGetEnvOrDefaultHelpers(t *testing.T) {
+	t.Setenv("TEST_ENV_DEFAULT", "value")
+	if got := GetEnvOrDefault("TEST_ENV_DEFAULT", "fallback"); got != "value" {
+		t.Fatalf("GetEnvOrDefault() = %q, want %q", got, "value")
+	}
+	if got := GetEnvOrDefault("TEST_ENV_DEFAULT_MISSING", "fallback"); got != "fallback" {
+		t.Fatalf("GetEnvOrDefault() = %q, want %q", got, "fallback")
+	}
+
+	t.Setenv("TEST_INT_DEFAULT", "41")
+	if got := GetEnvIntOrDefault("TEST_INT_DEFAULT", 10); got != 41 {
+		t.Fatalf("GetEnvIntOrDefault() = %d, want %d", got, 41)
+	}
+	if got := GetEnvIntOrDefault("TEST_INT_DEFAULT_MISSING", 10); got != 10 {
+		t.Fatalf("GetEnvIntOrDefault() = %d, want %d", got, 10)
+	}
+
+	t.Setenv("TEST_BOOL_DEFAULT", "true")
+	if !GetEnvBoolOrDefault("TEST_BOOL_DEFAULT", false) {
+		t.Fatal("GetEnvBoolOrDefault() should return true")
+	}
+	if !GetEnvBoolOrDefault("TEST_BOOL_DEFAULT_MISSING", true) {
+		t.Fatal("GetEnvBoolOrDefault() should return fallback true")
+	}
+}
+
+func TestGetStringOrDefaultFromApplicationProperties(t *testing.T) {
+	resetApplicationPropertiesForTests()
+	setApplicationProperties(map[string]string{
+		"app.name":    "demo",
+		"server.port": "7331",
+	})
+
+	if got := GetStringOrDefault("app.name", "fallback"); got != "demo" {
+		t.Fatalf("GetStringOrDefault() = %q, want %q", got, "demo")
+	}
+	if got := GetStringOrDefault("missing.key", "fallback"); got != "fallback" {
+		t.Fatalf("GetStringOrDefault() = %q, want %q", got, "fallback")
+	}
+	if got := GetIntOrDefault("server.port", 3000); got != 7331 {
+		t.Fatalf("GetIntOrDefault() = %d, want %d", got, 7331)
+	}
+}
