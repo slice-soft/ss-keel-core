@@ -21,16 +21,6 @@ func GetEnv(name string) string {
 	return value
 }
 
-// GetEnvOrDefault retrieves an environment variable by name and returns its string value.
-// If the environment variable is not set, it returns the provided default value.
-func GetEnvOrDefault(name, defaultValue string) string {
-	value, ok := os.LookupEnv(name)
-	if !ok {
-		return defaultValue
-	}
-	return value
-}
-
 // GetEnvInt retrieves an environment variable by name and returns its integer value.
 // It panics if the environment variable is not set or cannot be parsed as an integer.
 func GetEnvInt(name string) int {
@@ -38,20 +28,6 @@ func GetEnvInt(name string) int {
 	result, err := strconv.Atoi(value)
 	if err != nil {
 		panic(generateError(name))
-	}
-	return result
-}
-
-// GetEnvIntOrDefault retrieves an environment variable by name and returns its integer value.
-// If the environment variable is not set or cannot be parsed as an integer, it returns the provided default value.
-func GetEnvIntOrDefault(name string, defaultValue int) int {
-	value, ok := os.LookupEnv(name)
-	if !ok {
-		return defaultValue
-	}
-	result, err := strconv.Atoi(value)
-	if err != nil {
-		return defaultValue
 	}
 	return result
 }
@@ -74,20 +50,6 @@ func GetEnvBool(name string) bool {
 	result, err := strconv.ParseBool(value)
 	if err != nil {
 		panic(generateError(name))
-	}
-	return result
-}
-
-// GetEnvBoolOrDefault retrieves an environment variable by name and returns its boolean value.
-// If the environment variable is not set or cannot be parsed as a boolean, it returns the provided default value.
-func GetEnvBoolOrDefault(name string, defaultValue bool) bool {
-	value, ok := os.LookupEnv(name)
-	if !ok {
-		return defaultValue
-	}
-	result, err := strconv.ParseBool(value)
-	if err != nil {
-		return defaultValue
 	}
 	return result
 }
