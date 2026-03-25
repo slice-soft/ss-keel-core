@@ -225,3 +225,29 @@ func TestGetEnvBool(t *testing.T) {
 		})
 	}
 }
+
+func TestLookupHelpersFromApplicationProperties(t *testing.T) {
+	resetApplicationPropertiesForTests()
+	setApplicationProperties(map[string]string{
+		"app.name":    "demo",
+		"server.port": "7331",
+		"feature.on":  "true",
+		"worker.max":  "12",
+	})
+
+	if got, ok := LookupString("app.name"); !ok || got != "demo" {
+		t.Fatalf("LookupString() = (%q, %v), want (%q, true)", got, ok, "demo")
+	}
+	if _, ok := LookupString("missing.key"); ok {
+		t.Fatal("LookupString() should report missing key")
+	}
+	if got, ok := LookupInt("server.port"); !ok || got != 7331 {
+		t.Fatalf("LookupInt() = (%d, %v), want (%d, true)", got, ok, 7331)
+	}
+	if got, ok := LookupUint("worker.max"); !ok || got != 12 {
+		t.Fatalf("LookupUint() = (%d, %v), want (%d, true)", got, ok, 12)
+	}
+	if got, ok := LookupBool("feature.on"); !ok || !got {
+		t.Fatalf("LookupBool() = (%v, %v), want (true, true)", got, ok)
+	}
+}

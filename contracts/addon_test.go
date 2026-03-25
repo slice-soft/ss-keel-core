@@ -17,8 +17,8 @@ type debuggableMock struct {
 	events chan PanelEvent
 }
 
-func (d *debuggableMock) PanelID() string               { return d.id }
-func (d *debuggableMock) PanelLabel() string            { return d.label }
+func (d *debuggableMock) PanelID() string                { return d.id }
+func (d *debuggableMock) PanelLabel() string             { return d.label }
 func (d *debuggableMock) PanelEvents() <-chan PanelEvent { return d.events }
 
 type panelRegistryMock struct {
@@ -126,7 +126,7 @@ func TestManifestableManifest(t *testing.T) {
 			Capabilities: []string{"database"},
 			Resources:    []string{"postgres"},
 			EnvVars: []EnvVar{
-				{Key: "DB_DSN", Required: true, Secret: true, Source: "gorm"},
+				{Key: "DB_DSN", ConfigKey: "database.url", Required: true, Secret: true, Source: "gorm"},
 			},
 		},
 	}
@@ -152,6 +152,9 @@ func TestManifestableManifest(t *testing.T) {
 	ev := got.EnvVars[0]
 	if ev.Key != "DB_DSN" {
 		t.Fatalf("EnvVar.Key = %q, want %q", ev.Key, "DB_DSN")
+	}
+	if ev.ConfigKey != "database.url" {
+		t.Fatalf("EnvVar.ConfigKey = %q, want %q", ev.ConfigKey, "database.url")
 	}
 	if !ev.Required {
 		t.Fatal("EnvVar.Required should be true")

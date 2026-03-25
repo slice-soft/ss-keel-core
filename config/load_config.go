@@ -8,70 +8,87 @@ import (
 	"strings"
 )
 
-// LoadConfig reads keel.toml and environment variables to populate a typed config
-// struct T. Struct fields must use `keel:"KEY"` or `keel:"KEY,required"` tags.
+// LoadConfig reads application.properties and environment variables to populate
+// a typed config struct T. Struct fields must use `keel:"key"` or
+// `keel:"key,required"` tags.
 //
 // Resolution order for each field:
-//  1. Environment variable named by KEY
-//  2. Default declared in keel.toml [[env]] for that KEY
+//  1. Process environment, including values loaded automatically from the
+//     nearest .env file when present
+//  2. application.properties entry with the same key
 //
-// A variable is required when:
-//   - the struct tag includes "required" (keel:"KEY,required"), OR
-//   - the matching [[env]] entry in keel.toml has required = true
+// Nested structs are traversed recursively, so runtime config can mirror the
+// application's real shape instead of being flattened into key-by-key reads.
 //
-// Returns an error listing all missing required variables on startup.
+// Returns an error listing all missing required config values on startup.
 func LoadConfig[T any]() (T, error) {
-	tomlCfg, err := LoadKeelTOML()
-	if err != nil {
-		var zero T
-		return zero, err
-	}
-	return loadConfigWithTOML[T](tomlCfg)
+	ensureApplicationPropertiesLoaded()
+	return loadConfigWithLookup[T](lookupSetting)
 }
 
-// loadConfigWithTOML is the testable core of LoadConfig — accepts a pre-parsed KeelTOML.
-func loadConfigWithTOML[T any](tomlCfg KeelTOML) (T, error) {
+// MustLoadConfig loads a typed runtime config or panics during startup.
+func MustLoadConfig[T any]() T {
+	cfg, err := LoadConfig[T]()
+	if err != nil {
+		panic(fmt.Sprintf("failed to load runtime config: %v", err))
+	}
+	return cfg
+}
+
+// loadConfigWithLookup is the testable core of LoadConfig.
+func loadConfigWithLookup[T any](lookup func(string) (string, bool)) (T, error) {
 	var zero T
 
-	// Build lookup maps from keel.toml [[env]] declarations.
-	defaults := make(map[string]string)
-	tomlRequired := make(map[string]bool)
-	for _, decl := range tomlCfg.Env {
-		if decl.Default != "" {
-			defaults[decl.Key] = decl.Default
-		}
-		if decl.Required {
-			tomlRequired[decl.Key] = true
-		}
+	var cfg T
+	missing, err := loadStructWithLookup(reflect.ValueOf(&cfg).Elem(), lookup, "")
+	if err != nil {
+		return zero, err
 	}
 
-	var cfg T
-	cfgVal := reflect.ValueOf(&cfg).Elem()
-	cfgType := cfgVal.Type()
+	if len(missing) > 0 {
+		return zero, fmt.Errorf("missing required config values: %s", strings.Join(missing, ", "))
+	}
 
+	return cfg, nil
+}
+
+func loadStructWithLookup(v reflect.Value, lookup func(string) (string, bool), path string) ([]string, error) {
+	t := v.Type()
 	var missing []string
 
-	for i := range cfgType.NumField() {
-		field := cfgType.Field(i)
-		fieldVal := cfgVal.Field(i)
+	for i := range t.NumField() {
+		field := t.Field(i)
+		fieldVal := v.Field(i)
+		if !fieldVal.CanSet() {
+			continue
+		}
+
+		fieldPath := field.Name
+		if path != "" {
+			fieldPath = path + "." + field.Name
+		}
 
 		tag := field.Tag.Get("keel")
-		if tag == "" || tag == "-" {
+		if tag == "-" {
+			continue
+		}
+
+		if tag == "" {
+			if fieldVal.Kind() == reflect.Struct {
+				nestedMissing, err := loadStructWithLookup(fieldVal, lookup, fieldPath)
+				if err != nil {
+					return nil, err
+				}
+				missing = append(missing, nestedMissing...)
+			}
 			continue
 		}
 
 		parts := strings.SplitN(tag, ",", 2)
 		key := parts[0]
-		required := (len(parts) > 1 && parts[1] == "required") || tomlRequired[key]
+		required := len(parts) > 1 && parts[1] == "required"
 
-		raw, ok := os.LookupEnv(key)
-		if !ok {
-			if def, hasDefault := defaults[key]; hasDefault {
-				raw = def
-				ok = true
-			}
-		}
-
+		raw, ok := lookup(key)
 		if !ok {
 			if required {
 				missing = append(missing, key)
@@ -80,27 +97,33 @@ func loadConfigWithTOML[T any](tomlCfg KeelTOML) (T, error) {
 		}
 
 		if err := setField(fieldVal, raw); err != nil {
-			return zero, fmt.Errorf("config field %s (%s): %w", field.Name, key, err)
+			return nil, fmt.Errorf("config field %s (%s): %w", fieldPath, key, err)
 		}
 	}
 
-	if len(missing) > 0 {
-		return zero, fmt.Errorf("missing required environment variables: %s", strings.Join(missing, ", "))
-	}
-
-	return cfg, nil
+	return missing, nil
 }
 
 // IsDev reports whether the current environment is development.
-// Returns true when APP_ENV is unset, empty, or "development".
+// Returns true when app.env / APP_ENV is unset, empty, or "development".
 func IsDev() bool {
-	env := os.Getenv("APP_ENV")
+	env, ok := lookupSetting("app.env")
+	if !ok {
+		env, ok = os.LookupEnv("APP_ENV")
+	}
+	if !ok {
+		return true
+	}
 	return env == "" || env == "development"
 }
 
 // IsProd reports whether the current environment is production.
 func IsProd() bool {
-	return os.Getenv("APP_ENV") == "production"
+	env, ok := lookupSetting("app.env")
+	if !ok {
+		env, ok = os.LookupEnv("APP_ENV")
+	}
+	return ok && env == "production"
 }
 
 // setField converts the raw string s into the appropriate Go type and assigns it to v.

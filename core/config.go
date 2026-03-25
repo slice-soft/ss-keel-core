@@ -2,17 +2,17 @@ package core
 
 type KConfig struct {
 	DisableHealth bool
-	Port          int
-	ServiceName   string
-	Env           string
+	Port          int    `keel:"server.port,required"`
+	ServiceName   string `keel:"app.name,required"`
+	Env           string `keel:"app.env,required"`
 	Docs          DocsConfig
 }
 
 type DocsConfig struct {
-	Path        string
-	Title       string
-	Version     string
-	Description string
+	Path        string `keel:"docs.path,required"`
+	Title       string `keel:"docs.title,required"`
+	Version     string `keel:"docs.version,required"`
+	Description string `keel:"docs.description"`
 	Contact     *DocsContact
 	License     *DocsLicense
 	Servers     []string // format: "https://api.example.com - Description"
