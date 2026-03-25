@@ -11,6 +11,7 @@ import (
 )
 
 const applicationPropertiesFile = "application.properties"
+const dotEnvFile = ".env"
 
 var (
 	propertyPlaceholderPattern = regexp.MustCompile(`\$\{([^{}]+)\}`)
@@ -18,11 +19,16 @@ var (
 	propertiesMu     sync.RWMutex
 	propertiesLoaded bool
 	propertiesValues = map[string]string{}
+
+	dotEnvMu     sync.RWMutex
+	dotEnvLoaded bool
 )
 
 // LoadApplicationProperties loads the nearest application.properties file,
 // walking up from the current working directory.
 func LoadApplicationProperties() error {
+	ensureDotEnvLoaded()
+
 	dir, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("could not determine working directory: %w", err)
@@ -38,6 +44,8 @@ func LoadApplicationProperties() error {
 }
 
 func lookupSetting(key string) (string, bool) {
+	ensureDotEnvLoaded()
+
 	if value, ok := os.LookupEnv(key); ok {
 		return value, true
 	}
@@ -52,6 +60,8 @@ func lookupSetting(key string) (string, bool) {
 }
 
 func ensureApplicationPropertiesLoaded() {
+	ensureDotEnvLoaded()
+
 	propertiesMu.RLock()
 	if propertiesLoaded {
 		propertiesMu.RUnlock()
@@ -74,12 +84,37 @@ func ensureApplicationPropertiesLoaded() {
 	setApplicationProperties(values)
 }
 
+func ensureDotEnvLoaded() {
+	dotEnvMu.RLock()
+	if dotEnvLoaded {
+		dotEnvMu.RUnlock()
+		return
+	}
+	dotEnvMu.RUnlock()
+
+	dir, err := os.Getwd()
+	if err != nil {
+		setDotEnvLoaded()
+		return
+	}
+
+	_ = loadDotEnvFromDir(dir)
+	setDotEnvLoaded()
+}
+
 func setApplicationProperties(values map[string]string) {
 	propertiesMu.Lock()
 	defer propertiesMu.Unlock()
 
 	propertiesValues = values
 	propertiesLoaded = true
+}
+
+func setDotEnvLoaded() {
+	dotEnvMu.Lock()
+	defer dotEnvMu.Unlock()
+
+	dotEnvLoaded = true
 }
 
 func loadApplicationPropertiesFromDir(dir string) (map[string]string, error) {
@@ -99,21 +134,6 @@ func loadApplicationPropertiesFromDir(dir string) (map[string]string, error) {
 	}
 
 	return values, nil
-}
-
-func findApplicationProperties(dir string) (string, bool) {
-	for {
-		candidate := filepath.Join(dir, applicationPropertiesFile)
-		if _, err := os.Stat(candidate); err == nil {
-			return candidate, true
-		}
-
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			return "", false
-		}
-		dir = parent
-	}
 }
 
 func parseApplicationProperties(content string) (map[string]string, error) {
@@ -201,4 +221,87 @@ func resolvePropertyValue(key string, raw, resolved map[string]string, visiting 
 	}
 
 	return resolvedValue, nil
+}
+
+func loadDotEnvFromDir(dir string) error {
+	path, found := findNearestFile(dir, dotEnvFile)
+	if !found {
+		return nil
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("failed to read %s: %w", path, err)
+	}
+
+	for key, value := range parseDotEnv(string(data)) {
+		if _, exists := os.LookupEnv(key); exists {
+			continue
+		}
+		if err := os.Setenv(key, value); err != nil {
+			return fmt.Errorf("failed to set %s from %s: %w", key, path, err)
+		}
+	}
+
+	return nil
+}
+
+func findApplicationProperties(dir string) (string, bool) {
+	return findNearestFile(dir, applicationPropertiesFile)
+}
+
+func findNearestFile(dir, name string) (string, bool) {
+	for {
+		candidate := filepath.Join(dir, name)
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate, true
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", false
+		}
+		dir = parent
+	}
+}
+
+func parseDotEnv(content string) map[string]string {
+	values := map[string]string{}
+	scanner := bufio.NewScanner(strings.NewReader(content))
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		line = strings.TrimPrefix(line, "export ")
+		separator := strings.Index(line, "=")
+		if separator <= 0 {
+			continue
+		}
+
+		key := strings.TrimSpace(line[:separator])
+		if key == "" {
+			continue
+		}
+
+		value := strings.TrimSpace(line[separator+1:])
+		values[key] = stripWrappingQuotes(value)
+	}
+
+	return values
+}
+
+func stripWrappingQuotes(value string) string {
+	if len(value) < 2 {
+		return value
+	}
+
+	if (strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"")) ||
+		(strings.HasPrefix(value, "'") && strings.HasSuffix(value, "'")) {
+		return value[1 : len(value)-1]
+	}
+
+	return value
 }

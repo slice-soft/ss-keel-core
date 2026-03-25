@@ -6,9 +6,14 @@ import (
 	"strconv"
 )
 
-// generateError creates a standard error message for missing environment variables.
-func generateError(name string) string {
+// generateEnvError creates a standard error message for missing environment variables.
+func generateEnvError(name string) string {
 	return fmt.Sprintf("required environment variable not found: %s", name)
+}
+
+// generateConfigError creates a standard error message for missing runtime configuration values.
+func generateConfigError(name string) string {
+	return fmt.Sprintf("required config value not found: %s", name)
 }
 
 // GetEnv retrieves an environment variable by name and returns its string value.
@@ -16,7 +21,7 @@ func generateError(name string) string {
 func GetEnv(name string) string {
 	value, ok := os.LookupEnv(name)
 	if !ok {
-		panic(generateError(name))
+		panic(generateEnvError(name))
 	}
 	return value
 }
@@ -27,7 +32,7 @@ func GetEnvInt(name string) int {
 	value := GetEnv(name)
 	result, err := strconv.Atoi(value)
 	if err != nil {
-		panic(generateError(name))
+		panic(generateEnvError(name))
 	}
 	return result
 }
@@ -38,7 +43,7 @@ func GetEnvUint(name string) uint {
 	value := GetEnv(name)
 	result, err := strconv.ParseUint(value, 10, 32)
 	if err != nil {
-		panic(generateError(name))
+		panic(generateEnvError(name))
 	}
 	return uint(result)
 }
@@ -49,7 +54,7 @@ func GetEnvBool(name string) bool {
 	value := GetEnv(name)
 	result, err := strconv.ParseBool(value)
 	if err != nil {
-		panic(generateError(name))
+		panic(generateEnvError(name))
 	}
 	return result
 }
@@ -59,7 +64,7 @@ func GetEnvBool(name string) bool {
 func GetString(key string) string {
 	value, ok := lookupSetting(key)
 	if !ok {
-		panic(generateError(key))
+		panic(generateConfigError(key))
 	}
 	return value
 }
@@ -69,7 +74,7 @@ func GetInt(key string) int {
 	value := GetString(key)
 	result, err := strconv.Atoi(value)
 	if err != nil {
-		panic(generateError(key))
+		panic(generateConfigError(key))
 	}
 	return result
 }
@@ -79,7 +84,7 @@ func GetUint(key string) uint {
 	value := GetString(key)
 	result, err := strconv.ParseUint(value, 10, 32)
 	if err != nil {
-		panic(generateError(key))
+		panic(generateConfigError(key))
 	}
 	return uint(result)
 }
@@ -89,7 +94,7 @@ func GetBool(key string) bool {
 	value := GetString(key)
 	result, err := strconv.ParseBool(value)
 	if err != nil {
-		panic(generateError(key))
+		panic(generateConfigError(key))
 	}
 	return result
 }
@@ -109,7 +114,7 @@ func LookupInt(key string) (int, bool) {
 
 	result, err := strconv.Atoi(value)
 	if err != nil {
-		panic(generateError(key))
+		panic(generateConfigError(key))
 	}
 	return result, true
 }
@@ -123,7 +128,7 @@ func LookupUint(key string) (uint, bool) {
 
 	result, err := strconv.ParseUint(value, 10, 32)
 	if err != nil {
-		panic(generateError(key))
+		panic(generateConfigError(key))
 	}
 	return uint(result), true
 }
@@ -137,7 +142,7 @@ func LookupBool(key string) (bool, bool) {
 
 	result, err := strconv.ParseBool(value)
 	if err != nil {
-		panic(generateError(key))
+		panic(generateConfigError(key))
 	}
 	return result, true
 }

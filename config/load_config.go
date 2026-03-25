@@ -13,13 +13,26 @@ import (
 // `keel:"key,required"` tags.
 //
 // Resolution order for each field:
-//  1. Exact environment variable named by key
+//  1. Process environment, including values loaded automatically from the
+//     nearest .env file when present
 //  2. application.properties entry with the same key
 //
-// Returns an error listing all missing required variables on startup.
+// Nested structs are traversed recursively, so runtime config can mirror the
+// application's real shape instead of being flattened into key-by-key reads.
+//
+// Returns an error listing all missing required config values on startup.
 func LoadConfig[T any]() (T, error) {
 	ensureApplicationPropertiesLoaded()
 	return loadConfigWithLookup[T](lookupSetting)
+}
+
+// MustLoadConfig loads a typed runtime config or panics during startup.
+func MustLoadConfig[T any]() T {
+	cfg, err := LoadConfig[T]()
+	if err != nil {
+		panic(fmt.Sprintf("failed to load runtime config: %v", err))
+	}
+	return cfg
 }
 
 // loadConfigWithLookup is the testable core of LoadConfig.
@@ -27,17 +40,47 @@ func loadConfigWithLookup[T any](lookup func(string) (string, bool)) (T, error) 
 	var zero T
 
 	var cfg T
-	cfgVal := reflect.ValueOf(&cfg).Elem()
-	cfgType := cfgVal.Type()
+	missing, err := loadStructWithLookup(reflect.ValueOf(&cfg).Elem(), lookup, "")
+	if err != nil {
+		return zero, err
+	}
 
+	if len(missing) > 0 {
+		return zero, fmt.Errorf("missing required config values: %s", strings.Join(missing, ", "))
+	}
+
+	return cfg, nil
+}
+
+func loadStructWithLookup(v reflect.Value, lookup func(string) (string, bool), path string) ([]string, error) {
+	t := v.Type()
 	var missing []string
 
-	for i := range cfgType.NumField() {
-		field := cfgType.Field(i)
-		fieldVal := cfgVal.Field(i)
+	for i := range t.NumField() {
+		field := t.Field(i)
+		fieldVal := v.Field(i)
+		if !fieldVal.CanSet() {
+			continue
+		}
+
+		fieldPath := field.Name
+		if path != "" {
+			fieldPath = path + "." + field.Name
+		}
 
 		tag := field.Tag.Get("keel")
-		if tag == "" || tag == "-" {
+		if tag == "-" {
+			continue
+		}
+
+		if tag == "" {
+			if fieldVal.Kind() == reflect.Struct {
+				nestedMissing, err := loadStructWithLookup(fieldVal, lookup, fieldPath)
+				if err != nil {
+					return nil, err
+				}
+				missing = append(missing, nestedMissing...)
+			}
 			continue
 		}
 
@@ -46,7 +89,6 @@ func loadConfigWithLookup[T any](lookup func(string) (string, bool)) (T, error) 
 		required := len(parts) > 1 && parts[1] == "required"
 
 		raw, ok := lookup(key)
-
 		if !ok {
 			if required {
 				missing = append(missing, key)
@@ -55,15 +97,11 @@ func loadConfigWithLookup[T any](lookup func(string) (string, bool)) (T, error) 
 		}
 
 		if err := setField(fieldVal, raw); err != nil {
-			return zero, fmt.Errorf("config field %s (%s): %w", field.Name, key, err)
+			return nil, fmt.Errorf("config field %s (%s): %w", fieldPath, key, err)
 		}
 	}
 
-	if len(missing) > 0 {
-		return zero, fmt.Errorf("missing required environment variables: %s", strings.Join(missing, ", "))
-	}
-
-	return cfg, nil
+	return missing, nil
 }
 
 // IsDev reports whether the current environment is development.

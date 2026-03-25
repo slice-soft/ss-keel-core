@@ -62,6 +62,53 @@ func TestLoadApplicationProperties_WalksUp(t *testing.T) {
 	}
 }
 
+func TestGetString_AutoLoadsDotEnvBeforeApplicationProperties(t *testing.T) {
+	resetApplicationPropertiesForTests()
+	resetDotEnvForTests()
+
+	const (
+		serviceEnvKey = "TEST_KEEL_SERVICE_NAME_AUTOLOAD"
+		appEnvKey     = "TEST_KEEL_APP_ENV_AUTOLOAD"
+	)
+	t.Cleanup(func() {
+		_ = os.Unsetenv(serviceEnvKey)
+		_ = os.Unsetenv(appEnvKey)
+	})
+
+	root := t.TempDir()
+	nested := filepath.Join(root, "cmd")
+	if err := os.MkdirAll(nested, 0755); err != nil {
+		t.Fatalf("failed to create nested dir: %v", err)
+	}
+
+	dotEnv := serviceEnvKey + "=dotenv-service\n" + appEnvKey + "=production\n"
+	if err := os.WriteFile(filepath.Join(root, dotEnvFile), []byte(dotEnv), 0644); err != nil {
+		t.Fatalf("failed to write .env: %v", err)
+	}
+
+	props := "app.name=${" + serviceEnvKey + ":demo}\napp.env=${" + appEnvKey + ":development}\n"
+	if err := os.WriteFile(filepath.Join(root, applicationPropertiesFile), []byte(props), 0644); err != nil {
+		t.Fatalf("failed to write application.properties: %v", err)
+	}
+
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to get wd: %v", err)
+	}
+	defer func() { _ = os.Chdir(oldWD) }()
+
+	if err := os.Chdir(nested); err != nil {
+		t.Fatalf("failed to chdir: %v", err)
+	}
+
+	if got := GetString("app.name"); got != "dotenv-service" {
+		t.Fatalf("GetString(app.name) = %q, want %q", got, "dotenv-service")
+	}
+	if got := GetString("app.env"); got != "production" {
+		t.Fatalf("GetString(app.env) = %q, want %q", got, "production")
+	}
+}
+
 func TestParseApplicationProperties_InvalidLine(t *testing.T) {
 	_, err := parseApplicationProperties("invalid-line")
 	if err == nil {
@@ -71,8 +118,18 @@ func TestParseApplicationProperties_InvalidLine(t *testing.T) {
 
 func resetApplicationPropertiesForTests() {
 	propertiesMu.Lock()
-	defer propertiesMu.Unlock()
-
 	propertiesLoaded = false
 	propertiesValues = map[string]string{}
+	propertiesMu.Unlock()
+
+	dotEnvMu.Lock()
+	dotEnvLoaded = true
+	dotEnvMu.Unlock()
+}
+
+func resetDotEnvForTests() {
+	dotEnvMu.Lock()
+	defer dotEnvMu.Unlock()
+
+	dotEnvLoaded = false
 }

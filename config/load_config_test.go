@@ -12,6 +12,16 @@ type propertyConfig struct {
 	Skipped string `keel:"-"`
 }
 
+type nestedDocsConfig struct {
+	Path  string `keel:"docs.path,required"`
+	Title string `keel:"docs.title"`
+}
+
+type nestedPropertyConfig struct {
+	AppName string `keel:"app.name,required"`
+	Docs    nestedDocsConfig
+}
+
 func TestLoadConfigWithLookup_LoadsTypedValues(t *testing.T) {
 	lookup := func(key string) (string, bool) {
 		values := map[string]string{
@@ -67,7 +77,7 @@ func TestLoadConfigWithLookup_ReportsMissingRequired(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected missing required error")
 	}
-	if err.Error() != "missing required environment variables: server.port" {
+	if err.Error() != "missing required config values: server.port" {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -86,6 +96,45 @@ func TestLoadConfigWithLookup_ReportsInvalidType(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected invalid type error")
 	}
+}
+
+func TestLoadConfigWithLookup_LoadsNestedStructs(t *testing.T) {
+	lookup := func(key string) (string, bool) {
+		values := map[string]string{
+			"app.name":   "keel-api",
+			"docs.path":  "/docs",
+			"docs.title": "Keel API",
+		}
+		value, ok := values[key]
+		return value, ok
+	}
+
+	cfg, err := loadConfigWithLookup[nestedPropertyConfig](lookup)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if cfg.AppName != "keel-api" {
+		t.Fatalf("AppName = %q, want %q", cfg.AppName, "keel-api")
+	}
+	if cfg.Docs.Path != "/docs" {
+		t.Fatalf("Docs.Path = %q, want %q", cfg.Docs.Path, "/docs")
+	}
+	if cfg.Docs.Title != "Keel API" {
+		t.Fatalf("Docs.Title = %q, want %q", cfg.Docs.Title, "Keel API")
+	}
+}
+
+func TestMustLoadConfig_PanicsOnMissingRequiredValues(t *testing.T) {
+	resetApplicationPropertiesForTests()
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("expected MustLoadConfig to panic")
+		}
+	}()
+
+	_ = MustLoadConfig[propertyConfig]()
 }
 
 func TestIsDevAndIsProd(t *testing.T) {
