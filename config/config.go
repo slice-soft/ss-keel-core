@@ -21,16 +21,6 @@ func GetEnv(name string) string {
 	return value
 }
 
-// GetEnvOrDefault retrieves an environment variable by name and falls back to
-// defaultValue when the variable is not set.
-func GetEnvOrDefault(name, defaultValue string) string {
-	value, ok := os.LookupEnv(name)
-	if !ok {
-		return defaultValue
-	}
-	return value
-}
-
 // GetEnvInt retrieves an environment variable by name and returns its integer value.
 // It panics if the environment variable is not set or cannot be parsed as an integer.
 func GetEnvInt(name string) int {

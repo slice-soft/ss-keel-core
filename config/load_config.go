@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -68,13 +69,23 @@ func loadConfigWithLookup[T any](lookup func(string) (string, bool)) (T, error) 
 // IsDev reports whether the current environment is development.
 // Returns true when app.env / APP_ENV is unset, empty, or "development".
 func IsDev() bool {
-	env := GetStringOrDefault("app.env", GetEnvOrDefault("APP_ENV", "development"))
+	env, ok := lookupSetting("app.env")
+	if !ok {
+		env, ok = os.LookupEnv("APP_ENV")
+	}
+	if !ok {
+		return true
+	}
 	return env == "" || env == "development"
 }
 
 // IsProd reports whether the current environment is production.
 func IsProd() bool {
-	return GetStringOrDefault("app.env", GetEnvOrDefault("APP_ENV", "")) == "production"
+	env, ok := lookupSetting("app.env")
+	if !ok {
+		env, ok = os.LookupEnv("APP_ENV")
+	}
+	return ok && env == "production"
 }
 
 // setField converts the raw string s into the appropriate Go type and assigns it to v.

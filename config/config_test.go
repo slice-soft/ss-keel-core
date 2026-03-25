@@ -226,15 +226,7 @@ func TestGetEnvBool(t *testing.T) {
 	}
 }
 
-func TestGetEnvOrDefaultHelpers(t *testing.T) {
-	t.Setenv("TEST_ENV_DEFAULT", "value")
-	if got := GetEnvOrDefault("TEST_ENV_DEFAULT", "fallback"); got != "value" {
-		t.Fatalf("GetEnvOrDefault() = %q, want %q", got, "value")
-	}
-	if got := GetEnvOrDefault("TEST_ENV_DEFAULT_MISSING", "fallback"); got != "fallback" {
-		t.Fatalf("GetEnvOrDefault() = %q, want %q", got, "fallback")
-	}
-
+func TestGetEnvDefaultHelpers(t *testing.T) {
 	t.Setenv("TEST_INT_DEFAULT", "41")
 	if got := GetEnvIntOrDefault("TEST_INT_DEFAULT", 10); got != 41 {
 		t.Fatalf("GetEnvIntOrDefault() = %d, want %d", got, 41)
