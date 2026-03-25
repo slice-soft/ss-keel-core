@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/slice-soft/ss-keel-core/compare/v0.8.0...v0.9.0) (2026-03-25)
+
+
+### Features
+
+* add core contracts for addons including Addon, Debuggable, and Manifestable interfaces ([#31](https://github.com/slice-soft/ss-keel-core/issues/31)) ([f6b78c8](https://github.com/slice-soft/ss-keel-core/commit/f6b78c8910244c9676ac6bee3b0e84915a2e9c16))
+
 ## [0.8.0](https://github.com/slice-soft/ss-keel-core/compare/v0.7.0...v0.8.0) (2026-03-25)
 
 
