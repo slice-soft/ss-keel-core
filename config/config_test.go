@@ -226,38 +226,28 @@ func TestGetEnvBool(t *testing.T) {
 	}
 }
 
-func TestGetEnvDefaultHelpers(t *testing.T) {
-	t.Setenv("TEST_INT_DEFAULT", "41")
-	if got := GetEnvIntOrDefault("TEST_INT_DEFAULT", 10); got != 41 {
-		t.Fatalf("GetEnvIntOrDefault() = %d, want %d", got, 41)
-	}
-	if got := GetEnvIntOrDefault("TEST_INT_DEFAULT_MISSING", 10); got != 10 {
-		t.Fatalf("GetEnvIntOrDefault() = %d, want %d", got, 10)
-	}
-
-	t.Setenv("TEST_BOOL_DEFAULT", "true")
-	if !GetEnvBoolOrDefault("TEST_BOOL_DEFAULT", false) {
-		t.Fatal("GetEnvBoolOrDefault() should return true")
-	}
-	if !GetEnvBoolOrDefault("TEST_BOOL_DEFAULT_MISSING", true) {
-		t.Fatal("GetEnvBoolOrDefault() should return fallback true")
-	}
-}
-
-func TestGetStringOrDefaultFromApplicationProperties(t *testing.T) {
+func TestLookupHelpersFromApplicationProperties(t *testing.T) {
 	resetApplicationPropertiesForTests()
 	setApplicationProperties(map[string]string{
 		"app.name":    "demo",
 		"server.port": "7331",
+		"feature.on":  "true",
+		"worker.max":  "12",
 	})
 
-	if got := GetStringOrDefault("app.name", "fallback"); got != "demo" {
-		t.Fatalf("GetStringOrDefault() = %q, want %q", got, "demo")
+	if got, ok := LookupString("app.name"); !ok || got != "demo" {
+		t.Fatalf("LookupString() = (%q, %v), want (%q, true)", got, ok, "demo")
 	}
-	if got := GetStringOrDefault("missing.key", "fallback"); got != "fallback" {
-		t.Fatalf("GetStringOrDefault() = %q, want %q", got, "fallback")
+	if _, ok := LookupString("missing.key"); ok {
+		t.Fatal("LookupString() should report missing key")
 	}
-	if got := GetIntOrDefault("server.port", 3000); got != 7331 {
-		t.Fatalf("GetIntOrDefault() = %d, want %d", got, 7331)
+	if got, ok := LookupInt("server.port"); !ok || got != 7331 {
+		t.Fatalf("LookupInt() = (%d, %v), want (%d, true)", got, ok, 7331)
+	}
+	if got, ok := LookupUint("worker.max"); !ok || got != 12 {
+		t.Fatalf("LookupUint() = (%d, %v), want (%d, true)", got, ok, 12)
+	}
+	if got, ok := LookupBool("feature.on"); !ok || !got {
+		t.Fatalf("LookupBool() = (%v, %v), want (true, true)", got, ok)
 	}
 }

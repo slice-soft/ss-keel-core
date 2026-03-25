@@ -57,8 +57,8 @@ func TestLoadApplicationProperties_WalksUp(t *testing.T) {
 		t.Fatalf("LoadApplicationProperties returned error: %v", err)
 	}
 
-	if got := GetStringOrDefault("app.name", "fallback"); got != "demo" {
-		t.Fatalf("GetStringOrDefault() = %q, want %q", got, "demo")
+	if got := GetString("app.name"); got != "demo" {
+		t.Fatalf("GetString() = %q, want %q", got, "demo")
 	}
 }
 

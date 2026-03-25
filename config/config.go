@@ -32,40 +32,10 @@ func GetEnvInt(name string) int {
 	return result
 }
 
-// GetEnvIntOrDefault retrieves an integer environment variable and falls back
-// to defaultValue when it is not set.
-func GetEnvIntOrDefault(name string, defaultValue int) int {
-	value, ok := os.LookupEnv(name)
-	if !ok || value == "" {
-		return defaultValue
-	}
-
-	result, err := strconv.Atoi(value)
-	if err != nil {
-		panic(generateError(name))
-	}
-	return result
-}
-
 // GetEnvUint retrieves an environment variable by name and returns its unsigned integer value.
 // It panics if the environment variable is not set or cannot be parsed as an unsigned integer.
 func GetEnvUint(name string) uint {
 	value := GetEnv(name)
-	result, err := strconv.ParseUint(value, 10, 32)
-	if err != nil {
-		panic(generateError(name))
-	}
-	return uint(result)
-}
-
-// GetEnvUintOrDefault retrieves an unsigned integer environment variable and
-// falls back to defaultValue when it is not set.
-func GetEnvUintOrDefault(name string, defaultValue uint) uint {
-	value, ok := os.LookupEnv(name)
-	if !ok || value == "" {
-		return defaultValue
-	}
-
 	result, err := strconv.ParseUint(value, 10, 32)
 	if err != nil {
 		panic(generateError(name))
@@ -84,21 +54,6 @@ func GetEnvBool(name string) bool {
 	return result
 }
 
-// GetEnvBoolOrDefault retrieves a boolean environment variable and falls back
-// to defaultValue when it is not set.
-func GetEnvBoolOrDefault(name string, defaultValue bool) bool {
-	value, ok := os.LookupEnv(name)
-	if !ok || value == "" {
-		return defaultValue
-	}
-
-	result, err := strconv.ParseBool(value)
-	if err != nil {
-		panic(generateError(name))
-	}
-	return result
-}
-
 // GetString returns a resolved application setting. It checks exact OS
 // environment variables first and then application.properties.
 func GetString(key string) string {
@@ -109,34 +64,9 @@ func GetString(key string) string {
 	return value
 }
 
-// GetStringOrDefault retrieves a resolved application setting and falls back to
-// defaultValue when no value is configured.
-func GetStringOrDefault(key, defaultValue string) string {
-	value, ok := lookupSetting(key)
-	if !ok {
-		return defaultValue
-	}
-	return value
-}
-
 // GetInt retrieves a resolved application setting as an integer.
 func GetInt(key string) int {
 	value := GetString(key)
-	result, err := strconv.Atoi(value)
-	if err != nil {
-		panic(generateError(key))
-	}
-	return result
-}
-
-// GetIntOrDefault retrieves a resolved application setting as an integer and
-// falls back to defaultValue when no value is configured.
-func GetIntOrDefault(key string, defaultValue int) int {
-	value, ok := lookupSetting(key)
-	if !ok || value == "" {
-		return defaultValue
-	}
-
 	result, err := strconv.Atoi(value)
 	if err != nil {
 		panic(generateError(key))
@@ -154,21 +84,6 @@ func GetUint(key string) uint {
 	return uint(result)
 }
 
-// GetUintOrDefault retrieves a resolved application setting as an unsigned
-// integer and falls back to defaultValue when no value is configured.
-func GetUintOrDefault(key string, defaultValue uint) uint {
-	value, ok := lookupSetting(key)
-	if !ok || value == "" {
-		return defaultValue
-	}
-
-	result, err := strconv.ParseUint(value, 10, 32)
-	if err != nil {
-		panic(generateError(key))
-	}
-	return uint(result)
-}
-
 // GetBool retrieves a resolved application setting as a boolean.
 func GetBool(key string) bool {
 	value := GetString(key)
@@ -179,17 +94,50 @@ func GetBool(key string) bool {
 	return result
 }
 
-// GetBoolOrDefault retrieves a resolved application setting as a boolean and
-// falls back to defaultValue when no value is configured.
-func GetBoolOrDefault(key string, defaultValue bool) bool {
+// LookupString returns a resolved application setting when present.
+// It checks exact OS environment variables first and then application.properties.
+func LookupString(key string) (string, bool) {
+	return lookupSetting(key)
+}
+
+// LookupInt returns a resolved application setting as an integer when present.
+func LookupInt(key string) (int, bool) {
 	value, ok := lookupSetting(key)
 	if !ok || value == "" {
-		return defaultValue
+		return 0, false
+	}
+
+	result, err := strconv.Atoi(value)
+	if err != nil {
+		panic(generateError(key))
+	}
+	return result, true
+}
+
+// LookupUint returns a resolved application setting as an unsigned integer when present.
+func LookupUint(key string) (uint, bool) {
+	value, ok := lookupSetting(key)
+	if !ok || value == "" {
+		return 0, false
+	}
+
+	result, err := strconv.ParseUint(value, 10, 32)
+	if err != nil {
+		panic(generateError(key))
+	}
+	return uint(result), true
+}
+
+// LookupBool returns a resolved application setting as a boolean when present.
+func LookupBool(key string) (bool, bool) {
+	value, ok := lookupSetting(key)
+	if !ok || value == "" {
+		return false, false
 	}
 
 	result, err := strconv.ParseBool(value)
 	if err != nil {
 		panic(generateError(key))
 	}
-	return result
+	return result, true
 }
