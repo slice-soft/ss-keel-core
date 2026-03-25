@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/slice-soft/ss-keel-core/compare/v0.7.0...v0.8.0) (2026-03-25)
+
+
+### Features
+
+* implement configuration loading from keel.toml and environment variables ([#28](https://github.com/slice-soft/ss-keel-core/issues/28)) ([a830eaf](https://github.com/slice-soft/ss-keel-core/commit/a830eaf5029d5b7d32884b11e5058ab05e96341e))
+
 ## [0.7.0](https://github.com/slice-soft/ss-keel-core/compare/v0.6.0...v0.7.0) (2026-03-15)
 
 
