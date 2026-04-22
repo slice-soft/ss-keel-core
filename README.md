@@ -14,6 +14,8 @@ architecture, automatic OpenAPI, and built-in validation.
 ![Made in Colombia](https://img.shields.io/badge/Made%20in-Colombia-FCD116?labelColor=003893)
 [![Sponsor](https://img.shields.io/badge/Sponsor-SS--Keel-003893?logo=github-sponsors&logoColor=green)](https://github.com/sponsors/slice-soft)
 
+Current stable release: `v0.11.0` (2026-03-25)
+
 ## Philosophy
 Go is excellent at giving you the tools to build anything. Keel is opinionated about *how* to organize it.
 
@@ -63,7 +65,10 @@ func main() {
 }
 ```
 
-Check out the documentation at [keel-go.dev](https://keel-go.dev) for guides and API reference.
+Documentation:
+
+- Getting started: [docs.keel-go.dev/en/guides/getting-started](https://docs.keel-go.dev/en/guides/getting-started/)
+- API reference: [docs.keel-go.dev/en/reference](https://docs.keel-go.dev/en/reference/)
 
 
 ## Contributing
