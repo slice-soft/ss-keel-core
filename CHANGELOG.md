@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/slice-soft/ss-keel-core/compare/v0.11.0...v0.12.0) (2026-05-06)
+
+
+### Features
+
+* implement resolveStatus function for accurate HTTP status code handling and add tests ([#38](https://github.com/slice-soft/ss-keel-core/issues/38)) ([de2341a](https://github.com/slice-soft/ss-keel-core/commit/de2341ad8f79fa1d1055368ffb4bba7f2fdb7ce2))
+
 ## [0.11.0](https://github.com/slice-soft/ss-keel-core/compare/v0.10.0...v0.11.0) (2026-03-25)
 
 
