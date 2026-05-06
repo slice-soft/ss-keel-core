@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -16,7 +17,7 @@ func (a *App) keelLogger() fiber.Handler {
 		err := c.Next()
 		duration := time.Since(start)
 
-		status := c.Response().StatusCode()
+		status := resolveStatus(c, err)
 		method := c.Method()
 		path := c.Path()
 		ip := c.IP()
@@ -41,4 +42,20 @@ func (a *App) keelLogger() fiber.Handler {
 
 		return err
 	}
+}
+
+// resolveStatus returns the true HTTP status code for the request.
+// c.Response().StatusCode() reads 200 before Fiber's error handler runs,
+// so we inspect the returned error directly when one is present.
+func resolveStatus(c *fiber.Ctx, err error) int {
+	if err != nil {
+		var ke *KError
+		if errors.As(err, &ke) {
+			return ke.StatusCode
+		}
+		if fe, ok := err.(*fiber.Error); ok {
+			return fe.Code
+		}
+	}
+	return c.Response().StatusCode()
 }
